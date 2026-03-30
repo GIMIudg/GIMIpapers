@@ -1,3 +1,5 @@
+[![DOI](https://zenodo.org/badge/1195806878.svg)](https://doi.org/10.5281/zenodo.19339595)
+
 # GIMIpapers
 
 GIMIpapers is the official repository of the *Grupo de Ingeniería Metabólica In Silico (GIMI)*. This repository compiles code and resources from research projects developed within the group.
