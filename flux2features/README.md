@@ -1,6 +1,4 @@
-Aquí lo tienes listo en formato `.md` para copiar directo:
 
-```md
 # 🧬 Metabolic Flux Feature Engineering (RBC-GEM)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)  
