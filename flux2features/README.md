@@ -17,7 +17,7 @@
 This project develops a pipeline to:
 
 - Compare **healthy vs pathological metabolic states**
-- Sample the flux space using **MCMC (CHRR)**
+- Sample the flux space
 - Define a **healthy reference (FBA)**
 - Extract **biologically meaningful features** from flux vectors
 - Analyze states using **interpretable machine learning (decision trees)**
@@ -36,7 +36,7 @@ This project develops a pipeline to:
 
 ```
 
-GEM → perturbation → MCMC sampling → fluxes → feature engineering → analysis
+GEM → perturbation → sampling → fluxes → feature engineering → analysis
 
 ```
 
@@ -72,7 +72,7 @@ project/
 
 1. **MATLAB**
    - Modify model (simulate G6PD)
-   - Run MCMC sampling
+   - Run sampling
 
 2. **Python**
    - Compute features
@@ -84,4 +84,3 @@ project/
 ## 🎯 Goal
 
 Define a **feature-based representation of metabolic states** to quantify proximity to health and enable interpretable analysis of perturbations.
-```
