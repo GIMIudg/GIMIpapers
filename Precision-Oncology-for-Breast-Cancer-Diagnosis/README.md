@@ -9,21 +9,18 @@ This repository contains scripts, workflows, and resources used to reproduce the
 The project focuses on generating personalized Genome-Scale Metabolic Models (GEMs) for breast cancer patients and apply Unsupervised Learning to classify patiens using clinical and metabolic data
 
 📂 Contents of the repository
-1. GEM construction
+1. Clinical_data_and_models_ids
+All data used in this project
+
+2. src
 
 MATLAB scripts for building patient-specific metabolic models
-
-Models generated from NIH breast cancer patient data
-
-Integration of clinical and transcriptomic features into the reconstruction pipeline
-
-2. Metabolic phenotype computation
 
 Flux balance analysis
 
 Calculation of key metabolic phenotypes and pathway activity metrics
 
-3. Patient clustering using multiple omics layers
+Patient clustering using multiple omics layers
 
 Clustering analyses performed using:
 
