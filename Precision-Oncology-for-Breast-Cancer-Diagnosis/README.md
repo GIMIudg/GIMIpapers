@@ -1,9 +1,8 @@
-# Precision Oncology for Breast Cancer Diagnosis
-Master’s Thesis Research Repository
+# Precision Oncology for Breast Cancer Metabolic Phenotyping
 
-Eduardo Ruiz Robles
-
-Biomedical Engineer - https://github.com/edur19 - https://www.linkedin.com/in/eduardo-ruiz-robles-9b0197281/
+Master’s Thesis Research Repository  
+M.Sc. in Bioengineering and Intelligent Computing  
+University of Guadalajara (CUCEI)
 
 This repository contains scripts, workflows, and resources used to reproduce the results of my Master’s thesis:
 “Precision Oncology for Breast Cancer Diagnosis.”
@@ -16,14 +15,19 @@ The project focuses on generating personalized Genome-Scale Metabolic Models (GE
 1. Clinical_data_and_models_ids
 
 -All data used in this project
+
 -1226 Genome Scale Metabolic Models
 
 2. src
 
 -MATLAB scripts for building patient-specific metabolic models
+
 -Flux balance analysis
+
 -Calculation of key metabolic phenotypes and pathway activity metrics
+
 -Patient clustering using multiple omics layers
+
 -Clustering analyses performed using: Clinical data and metabolic data
 
 ## Clustering
@@ -35,3 +39,11 @@ The project focuses on generating personalized Genome-Scale Metabolic Models (GE
 <img width="2250" height="2625" alt="image" src="https://github.com/user-attachments/assets/55273bb0-db31-44d9-a676-a818bbc43fd1" />
 
 A key result is the identification of a subgroup characterized by globally reduced metabolic activity (Divergent group), with coordinated decreases in oxidative phosphorylation, the TCA cycle, and nucleotide metabolism. This challenges the classical view of uniformly upregulated cancer metabolism and supports the existence of alternative metabolic regimes. This subgroup of patients is associated to less survival probability, triple negative cancer, and African ancestry.
+
+## Author
+
+Eduardo Ruiz Robles  
+Biomedical Engineer
+
+- GitHub: https://github.com/edur19
+- LinkedIn: https://www.linkedin.com/in/eduardo-ruiz-robles-9b019728
