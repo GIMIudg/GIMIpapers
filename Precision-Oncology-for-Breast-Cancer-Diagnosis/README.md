@@ -2,6 +2,7 @@
 Master’s Thesis Research Repository
 
 Eduardo Ruiz Robles
+
 Biomedical Engineer - https://github.com/edur19 - https://www.linkedin.com/in/eduardo-ruiz-robles-9b0197281/
 
 This repository contains scripts, workflows, and resources used to reproduce the results of my Master’s thesis:
