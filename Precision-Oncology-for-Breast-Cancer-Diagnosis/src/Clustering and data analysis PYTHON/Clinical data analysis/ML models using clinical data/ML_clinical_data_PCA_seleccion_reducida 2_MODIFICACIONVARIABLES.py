@@ -1,6 +1,6 @@
 # ============================================================
 # 🚀 Pipeline completo: Análisis de clustering Clínico/Demográfico (CON GRAFICACIÓN PCA)
-# VERSIÓN PCA - Reemplaza UMAP por PCA con grid de hiperparámetros
+# VERSIÓN PCA - 
 # ============================================================
 # =========================
 # 1. LIBRERÍAS Y CONFIGURACIÓN GLOBAL
