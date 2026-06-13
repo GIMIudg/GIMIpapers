@@ -1,6 +1,5 @@
 # ============================================================
 # 🚀 Pipeline completo: Análisis de clustering Clínico/Demográfico (CON GRAFICACIÓN UMAP)
-# VERSIÓN CORREGIDA - Todos los bugs detectados han sido reparados
 # ============================================================
 # =========================
 # 1. LIBRERÍAS Y CONFIGURACIÓN GLOBAL
