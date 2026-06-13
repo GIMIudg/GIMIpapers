@@ -183,13 +183,8 @@ print("Archivo 'pacientes_divergentes_para_estudio.csv' listo para análisis cl�
 
 # =================================================================
 # 7️⃣ VISUALIZACIÓN 3D DE CONVERGENCIA ENTRE LOS DOS MEJORES ALGORITMOS
-# ========
-# =================================================================
-# 7️⃣ VISUALIZACIÓN 3D DE CONVERGENCIA ENTRE LOS DOS MEJORES ALGORITMOS
-# =================================================================
-# =================================================================
-# 7️⃣ VISUALIZACIÓN 3D: RELACIÓN ENTRE LOS DOS ALGORITMOS GANADORES
-# =================================================================
+
+
 
 from mpl_toolkits.mplot3d import Axes3D
 
