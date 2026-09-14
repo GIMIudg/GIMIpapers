@@ -11,6 +11,7 @@ This repository contains scripts, workflows, and resources used to reproduce the
 
 The project focuses on generating personalized Genome-Scale Metabolic Models (GEMs) for breast cancer patients and apply Unsupervised Learning to classify patiens using clinical and metabolic data
 
+- For ensure the code runs well, you might have to modified some paths in the Machine Learning Scripts
 📂 Contents of the repository
 1. Clinical_data_and_models_ids
 

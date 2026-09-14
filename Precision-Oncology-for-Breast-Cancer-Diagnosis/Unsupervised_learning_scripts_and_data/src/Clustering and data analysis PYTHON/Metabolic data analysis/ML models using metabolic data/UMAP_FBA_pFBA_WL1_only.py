@@ -1,49 +1,56 @@
 # ============================================================
-# 🚀 Pipeline: Clustering metabólico — FeatureMatrix_TumorPhenotype
-# Fuente: FeatureMatrix_TumorPhenotype.csv (MATLAB output)
-# Optimizaciones: FBA | pFBA | L1w
-# Features: Métricas secundarias (sin flujos crudos)
-# Reducción: UMAP — múltiples configuraciones
+# 🚀 Pipeline: Metabolic Clustering — FeatureMatrix_TumorPhenotype
+# Source Data: FeatureMatrix_TumorPhenotype.csv (MATLAB COBRA output)
+# Optimizations: FBA | pFBA | L1w
+# Features: Secondary metabolic metrics (excluding raw fluxes)
+# Dimensionality Reduction: Multi-configuration UMAP Manifold Learning
+# Reproducibility Target: Full seed tracking across manifold reduction & clustering
 # ============================================================
 
 import re
 import os
-import pandas as pd
+import warnings
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn.preprocessing import RobustScaler
 from sklearn.impute import SimpleImputer
-from sklearn.cluster import (KMeans, AgglomerativeClustering, Birch,
-                              DBSCAN, MeanShift, AffinityPropagation,
-                              estimate_bandwidth)
+from sklearn.cluster import (
+    KMeans, AgglomerativeClustering, Birch,
+    DBSCAN, MeanShift, AffinityPropagation,
+    estimate_bandwidth
+)
 from sklearn.mixture import GaussianMixture, BayesianGaussianMixture
-from sklearn.metrics import (silhouette_score, davies_bouldin_score,
-                              calinski_harabasz_score)
+from sklearn.metrics import (
+    silhouette_score, davies_bouldin_score, calinski_harabasz_score
+)
 from sklearn.model_selection import ParameterGrid
-import warnings
+
 warnings.filterwarnings("ignore")
 
+# Verify UMAP installation
 try:
     import umap
     UMAP_AVAILABLE = True
 except ImportError:
     raise ImportError(
-        "❌ UMAP no está instalado. Ejecuta:\n"
+        "❌ UMAP is not installed in this environment. Run:\n"
         "   pip install umap-learn"
     )
 
+# Verify optional HDBSCAN installation
 try:
     import hdbscan
     HDBSCAN_AVAILABLE = True
 except ImportError:
     HDBSCAN_AVAILABLE = False
-    print("⚠️  HDBSCAN no disponible.")
+    print("⚠️  Warning: HDBSCAN is not installed in this environment.")
 
 # ============================================================
-# ⚙️  CONFIGURACIÓN — AJUSTA ESTAS RUTAS
+# ⚙️ CONFIGURATION & DIRECTORY SETUP
 # ============================================================
 PATH_FEATURES = "/Users/eduardoruiz/Documents/GitHub/Precision-Oncology-for-Breast-Cancer-Diagnosis/Clinical_data_and_models_ids/FeatureMatrix_TumorPhenotype_norm2agregado.csv"
 PATH_CLINICAL = "/Users/eduardoruiz/Documents/MCBCI/MCBCI2/Sistemas metabólicos/Proyecto_Tesis/Datos_actual/TCGA-BRCA.clinical.tsv"
@@ -51,19 +58,19 @@ PATH_SURVIVAL = "/Users/eduardoruiz/Documents/MCBCI/MCBCI2/Sistemas metabólicos
 OUT_DIR       = "resultados_TumorPhenotype_UMAP_metrics_actualizado_sinl2"
 os.makedirs(OUT_DIR, exist_ok=True)
 
-SEEDS_TO_TEST        = [42, 123, 100]
-RANDOM_SEED          = SEEDS_TO_TEST[0]
+# Random seeds for stochastic algorithms and manifold projections
+SEEDS_TO_TEST = [42, 123, 100]
+RANDOM_SEED   = SEEDS_TO_TEST[0]
 np.random.seed(RANDOM_SEED)
 
-ZERO_NULL_THRESHOLD  = 0.95
-SILHOUETTE_THRESHOLD = 0.10
-MAX_NOISE_PCT        = 5.0
-
+# Quality cutoffs and validation thresholds
+ZERO_NULL_THRESHOLD  = 0.95   # Drop features with >= 95% zero or missing values
+SILHOUETTE_THRESHOLD = 0.10   # Minimum acceptable silhouette coefficient
+MAX_NOISE_PCT        = 5.0    # Maximum allowable noise/unassigned sample percentage
 
 # ============================================================
-# 🔧 RAÍCES DE MÉTRICAS SECUNDARIAS
+# 🔧 METABOLIC FEATURE IDENTIFIERS
 # ============================================================
-# DESPUÉS:
 SOL_NAMES = ["FBA", "pFBA", "L1w"]
 
 METRIC_ROOTS = [
@@ -83,14 +90,16 @@ METRIC_ROOTS = [
     "GlnDependence",
 ]
 
-
-
 ONCOMET_NAMES = ["Lactate", "Succinate", "AlphaKG"]
 
 # ============================================================
-# 🔑 UTILIDADES
+# 🔑 UTILITY FUNCTIONS
 # ============================================================
 def extract_model_id(model_name: str) -> str:
+    """
+    Extracts standardized 16-character TCGA barcodes (TCGA-XX-XXXX-XX).
+    Falls back to leading string slice if standard regex pattern is not matched.
+    """
     match = re.search(
         r'(TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{2}[A-Z0-9]?)',
         str(model_name)
@@ -101,15 +110,21 @@ def extract_model_id(model_name: str) -> str:
 
 
 def detect_columns(df: pd.DataFrame) -> dict:
+    """
+    Scans matrix columns to identify raw fluxes, computed secondary biomarkers,
+    subsystem pathway activities (SA), and oncometabolite turnover variables.
+    """
     all_cols       = set(df.columns) - {"Model", "PatientID"}
     flux_cols      = []
     secondary_cols = []
     missing_roots  = []
 
+    # Detect raw metabolic flux columns
     for col in sorted(all_cols):
         if col.startswith("Flux_") and any(col.endswith(f"_{s}") for s in SOL_NAMES):
             flux_cols.append(col)
 
+    # Detect secondary computed metabolic features
     for root in METRIC_ROOTS:
         found_any = False
         for sol in SOL_NAMES:
@@ -119,9 +134,8 @@ def detect_columns(df: pd.DataFrame) -> dict:
                 found_any = True
         if not found_any:
             missing_roots.append(root)
-            
-# Subsystem Activity — detección automática de todas las SA_*_sol
-# Subsystem Activity — detección automática de todas las SA_*_sol
+
+    # Automatically detect Subsystem Activity (SA) metrics
     sa_cols = sorted([
         c for c in all_cols
         if c.startswith("SA_")
@@ -129,7 +143,8 @@ def detect_columns(df: pd.DataFrame) -> dict:
         and c not in secondary_cols
     ])
     secondary_cols.extend(sa_cols)
-    
+
+    # Detect oncometabolite indicators
     for met in ONCOMET_NAMES:
         for sol in SOL_NAMES:
             cname = f"Oncomet_{met}_{sol}"
@@ -137,82 +152,87 @@ def detect_columns(df: pd.DataFrame) -> dict:
                 secondary_cols.append(cname)
 
     if missing_roots:
-        print(f"\n   ⚠️  Raíces NO encontradas en CSV ({len(missing_roots)}):")
+        print(f"\n    ⚠️  Metric roots not found in CSV ({len(missing_roots)}):")
         for r in missing_roots:
-            print(f"      • {r}")
-        print("      → Revisa METRIC_ROOTS o inspecciona df.columns para el nombre exacto.")
+            print(f"       • {r}")
+        print("       → Please check METRIC_ROOTS definitions or source headers.")
 
-    return {"flux": flux_cols, "secondary": secondary_cols,
-            "all": flux_cols + secondary_cols}
+    return {
+        "flux": flux_cols,
+        "secondary": secondary_cols,
+        "all": flux_cols + secondary_cols
+    }
 
 
-def compute_noise_pct(labels):
-    return np.mean(labels == -1) * 100
+def compute_noise_pct(labels: np.ndarray) -> float:
+    """Computes percentage of samples classified as unassigned or noise (-1)."""
+    return float(np.mean(labels == -1) * 100)
 
 
 # ============================================================
-# 1️⃣  CARGA Y VALIDACIÓN
+# 1️⃣ DATA INGESTION & COHORT VALIDATION
 # ============================================================
 print("\n" + "="*60)
-print("📂 1. CARGANDO FeatureMatrix_TumorPhenotype.csv")
+print("📂 STEP 1: INGESTING AND VALIDATING FEATURE MATRIX")
 print("="*60)
 
 try:
     df_raw = pd.read_csv(PATH_FEATURES)
 except FileNotFoundError:
-    raise FileNotFoundError(f"❌ No encontrado: {PATH_FEATURES}")
+    raise FileNotFoundError(f"❌ Feature file not found at: {PATH_FEATURES}")
 
+# Normalize patient and sample IDs
 df_raw["Model"]     = df_raw["Model"].astype(str).apply(extract_model_id)
 df_raw["PatientID"] = df_raw["Model"].str.slice(0, 12)
 
 n_total  = len(df_raw)
 n_unique = df_raw["Model"].nunique()
-print(f"   Modelos cargados : {n_total}")
-print(f"   IDs únicos       : {n_unique}")
-print(f"   Columnas totales : {df_raw.shape[1]}")
+print(f"    Loaded metabolic models : {n_total}")
+print(f"    Unique model IDs        : {n_unique}")
+print(f"    Total input columns     : {df_raw.shape[1]}")
 
 if n_unique < n_total:
     dups = df_raw[df_raw.duplicated(subset="Model", keep=False)]
-    print(f"\n   ⚠️  {n_total - n_unique} IDs duplicados detectados:")
+    print(f"\n    ⚠️  {n_total - n_unique} duplicate model IDs detected:")
     print(dups["Model"].value_counts().head(10).to_string())
-    print("   → Conservando primera aparición por ID.")
+    print("    → Retaining the first occurrence per unique identifier.")
     df_raw = df_raw.drop_duplicates(subset="Model", keep="first").reset_index(drop=True)
-    print(f"   Modelos tras deduplicación: {len(df_raw)}")
+    print(f"    Cohort size post-deduplication: {len(df_raw)}")
 
 flux_example = [c for c in df_raw.columns if c.startswith("Flux_")][:3]
 sec_example  = [c for c in df_raw.columns
-                if not c.startswith("Flux_") and c not in ("Model","PatientID")][:6]
-print(f"\n   Ejemplo flujos    : {flux_example}")
-print(f"   Ejemplo métricas  : {sec_example}")
+                if not c.startswith("Flux_") and c not in ("Model", "PatientID")][:6]
+print(f"\n    Sample flux features     : {flux_example}")
+print(f"    Sample secondary metrics : {sec_example}")
 
 # ============================================================
-# 2️⃣  DETECCIÓN Y SELECCIÓN DE FEATURES
+# 2️⃣ FEATURE SELECTION
 # ============================================================
 print("\n" + "="*60)
-print("🔍 2. DETECTANDO FEATURES")
+print("🔍 STEP 2: METABOLIC FEATURE SELECTION")
 print("="*60)
 
 col_groups = detect_columns(df_raw)
-print(f"   Flujos crudos detectados   : {len(col_groups['flux'])}")
-print(f"   Métricas secundarias       : {len(col_groups['secondary'])}")
-print(f"   Total features disponibles : {len(col_groups['all'])}")
+print(f"    Detected raw fluxes       : {len(col_groups['flux'])}")
+print(f"    Detected secondary metrics: {len(col_groups['secondary'])}")
+print(f"    Total available features  : {len(col_groups['all'])}")
 
 FEATURE_MODE = "secondary"
 feature_cols = col_groups[FEATURE_MODE]
 
 if not feature_cols:
-    raise ValueError("❌ No se encontraron features. Revisa METRIC_ROOTS y SOL_NAMES.")
+    raise ValueError("❌ No valid features found. Check METRIC_ROOTS and SOL_NAMES.")
 
-print(f"\n   ✅ Modo: '{FEATURE_MODE}' → {len(feature_cols)} features")
-print(f"   Ejemplos: {feature_cols[:4]} ...")
+print(f"\n    ✅ Selected mode: '{FEATURE_MODE}' → {len(feature_cols)} features retained")
+print(f"    Head sample: {feature_cols[:4]} ...")
 
 df_features = df_raw[["Model"] + feature_cols].copy()
 
 # ============================================================
-# 3️⃣  LIMPIEZA: columnas con demasiados ceros/NaN
+# 3️⃣ QUALITY CONTROL: HIGH-SPARSITY PRUNING
 # ============================================================
 print("\n" + "="*60)
-print(f"🧹 3. LIMPIEZA (umbral >{ZERO_NULL_THRESHOLD*100:.0f}% ceros/nulos)")
+print(f"🧹 STEP 3: SPARSITY FILTERING (Threshold >= {ZERO_NULL_THRESHOLD*100:.0f}% zeros/nulls)")
 print("="*60)
 
 cols_to_drop = []
@@ -225,77 +245,71 @@ if cols_to_drop:
     drop_names = [c for c, _ in cols_to_drop]
     df_features.drop(columns=drop_names, inplace=True)
     feature_cols = [c for c in feature_cols if c not in drop_names]
-    print(f"   ❌ Eliminadas {len(drop_names)} columnas:")
+    print(f"    ❌ Pruned {len(drop_names)} high-sparsity columns:")
     for col, pct in cols_to_drop[:10]:
-        print(f"      • {col}: {pct*100:.1f}%")
+        print(f"       • {col}: {pct*100:.1f}%")
     if len(cols_to_drop) > 10:
-        print(f"      ... y {len(cols_to_drop)-10} más")
+        print(f"       ... and {len(cols_to_drop)-10} additional columns")
 else:
-    print("   ✅ Sin columnas para eliminar")
+    print("    ✅ Zero columns exceeded the sparsity threshold.")
 
-print(f"\n   ✅ Features tras limpieza: {len(feature_cols)}")
+print(f"\n    ✅ Features remaining after sparsity cleaning: {len(feature_cols)}")
 
 # ============================================================
-# 4️⃣  PREPROCESAMIENTO: imputación mediana + RobustScaler
+# 4️⃣ PREPROCESSING: IMPUTATION & ROBUST SCALING
 # ============================================================
 print("\n" + "="*60)
-print("⚙️  4. PREPROCESAMIENTO")
+print("⚙️  STEP 4: DATA PREPROCESSING (MEDIAN IMPUTATION + ROBUST SCALING)")
 print("="*60)
 
 X_raw = df_features[feature_cols].values.astype(float)
 
+# Impute missing values with column-wise medians
 imputer = SimpleImputer(strategy="median")
 X_imp   = imputer.fit_transform(X_raw)
 
+# Drop invariant (zero-variance) columns post-imputation
 col_std  = np.std(X_imp, axis=0)
 valid_ix = np.where(col_std > 1e-10)[0]
 n_const  = X_imp.shape[1] - len(valid_ix)
 if n_const > 0:
-    print(f"   ⚠️  Eliminando {n_const} columnas constantes tras imputación")
+    print(f"    ⚠️  Removing {n_const} constant columns post-imputation")
     X_imp        = X_imp[:, valid_ix]
     feature_cols = [feature_cols[i] for i in valid_ix]
 
+# Scale features using median and interquartile range (IQR) to reduce outlier bias
 scaler   = RobustScaler()
 X_scaled = scaler.fit_transform(X_imp)
 
 patient_ids = df_features["Model"].values
 
-print(f"   Modelos finales  : {X_scaled.shape[0]}")
-print(f"   Features finales : {X_scaled.shape[1]}")
-print(f"   ✅ X_scaled: {X_scaled.shape}")
+print(f"    Final processed models   : {X_scaled.shape[0]}")
+print(f"    Final processed features : {X_scaled.shape[1]}")
+print(f"    ✅ Scaled design matrix X_scaled: {X_scaled.shape}")
 
 # ============================================================
-# 5️⃣  UMAP — múltiples configuraciones sobre métricas secundarias
+# 5️⃣ MULTI-CONFIGURATION UMAP MANIFOLD LEARNING
 #
-#     UMAP (Uniform Manifold Approximation and Projection) captura
-#     estructura no lineal preservando tanto topología local como
-#     global, con mejor escalabilidad y velocidad que t-SNE.
+#    UMAP (Uniform Manifold Approximation and Projection) recovers
+#    non-linear biological manifolds while balancing local neighborhood
+#    connectivity and global cluster topology.
 #
-#     Parámetros explorados:
-#       • n_neighbors  : 5, 15, 30, 50
-#         Controla el balance local/global.
-#         Valores bajos → estructura local fina (clusters pequeños).
-#         Valores altos → estructura global más suave.
-#       • min_dist     : 0.0, 0.1, 0.5
-#         Controla cuán compactos quedan los clusters en el embedding.
-#         0.0 → clusters muy compactos (ideal para clustering).
-#         0.5 → distribución más uniforme y continua.
-#       • n_components : 2, 3
-#         Dimensionalidad del espacio reducido.
-#       • metric       : euclidean, cosine
-#         Métrica de distancia en el espacio original.
-#       • semillas     : SEEDS_TO_TEST
-#         UMAP es estocástico — explorar varias semillas garantiza
-#         que no elegimos un embedding por suerte.
+#    Explored hyperparameter combinations:
+#      • n_neighbors  : 5, 15, 30, 50
+#        Balances local detail (low) vs broader continuum structure (high).
+#      • min_dist     : 0.0, 0.1, 0.5
+#        Controls packing density (0.0 optimizes clustering compactness).
+#      • n_components : 2, 3
+#        Latent manifold projection dimension.
+#      • metric       : euclidean, cosine
+#        Distance metric in scaled metabolic metric space.
+#      • seeds        : SEEDS_TO_TEST (42, 123, 100)
+#        Evaluates manifold projection stability across stochastic runs.
 #
-#     VENTAJA vs t-SNE: UMAP preserva mejor la estructura global,
-#     es más rápido y admite transformación de nuevos puntos.
-#     Las distancias entre clusters son más interpretables que en t-SNE.
-#
-#     Total = 4 × 3 × 2 × 2 × 3 semillas = 144 embeddings
+#    Total configurations = 4 * 3 * 2 * 2 * 3 seeds = 144 embeddings
 # ============================================================
 print("\n" + "="*60)
-print("🔻 5. REDUCCIÓN UMAP — MÚLTIPLES CONFIGURACIONES (métricas)")
+print("🔻 STEP 5: UMAP MANIFOLD PROJECTIONS (SECONDARY METRICS)")
 print("="*60)
 
 UMAP_N_NEIGHBORS  = [5, 15, 30, 50]
@@ -303,19 +317,19 @@ UMAP_MIN_DIST     = [0.0, 0.1, 0.5]
 UMAP_N_COMPONENTS = [2, 3]
 UMAP_METRICS      = ["euclidean", "cosine"]
 
-# Validar n_neighbors: debe ser < n_samples
+# Ensure n_neighbors does not exceed cohort sample count
 UMAP_N_NEIGHBORS = [n for n in UMAP_N_NEIGHBORS if n < X_scaled.shape[0]]
 
 total_emb = (len(UMAP_N_NEIGHBORS) * len(UMAP_MIN_DIST) *
              len(UMAP_N_COMPONENTS) * len(UMAP_METRICS) * len(SEEDS_TO_TEST))
 
-print(f"   Features de entrada : {X_scaled.shape[1]} métricas secundarias")
-print(f"   Modelos             : {X_scaled.shape[0]}")
-print(f"   Configuraciones     : {len(UMAP_N_NEIGHBORS)} n_neighbors × "
+print(f"    Input features      : {X_scaled.shape[1]} secondary metrics")
+print(f"    Cohort samples      : {X_scaled.shape[0]}")
+print(f"    Grid specifications : {len(UMAP_N_NEIGHBORS)} n_neighbors × "
       f"{len(UMAP_MIN_DIST)} min_dist × "
       f"{len(UMAP_N_COMPONENTS)} dims × "
-      f"{len(UMAP_METRICS)} métricas × "
-      f"{len(SEEDS_TO_TEST)} semillas = {total_emb} embeddings")
+      f"{len(UMAP_METRICS)} metrics × "
+      f"{len(SEEDS_TO_TEST)} seeds = {total_emb} total embeddings")
 
 embedding_matrices = {}
 
@@ -340,16 +354,16 @@ for seed in SEEDS_TO_TEST:
                         X_umap = reducer.fit_transform(X_scaled)
                         embedding_matrices[key] = X_umap
                     except Exception as e:
-                        print(f"   ⚠️  Error en {key}: {e}")
+                        print(f"    ⚠️  Failed generating {key}: {e}")
 
     n_done = len([k for k in embedding_matrices if f"_S{seed}" in k])
-    print(f"   ✅ Semilla {seed} completada — {n_done} embeddings acumulados")
+    print(f"    ✅ Seed {seed} completed — {n_done} total embeddings compiled")
 
-print(f"\n   Total embeddings UMAP : {len(embedding_matrices)}")
-print(f"   Ejemplo de claves     : {list(embedding_matrices.keys())[:4]} ...")
+print(f"\n    Total generated UMAP embeddings : {len(embedding_matrices)}")
+print(f"    Sample embedding keys           : {list(embedding_matrices.keys())[:4]} ...")
 
 # ============================================================
-# 6️⃣  ALGORITMOS Y PARÁMETROS DE CLUSTERING
+# 6️⃣ CLUSTERING ALGORITHM SUITE & PARAMETER GRIDS
 # ============================================================
 K_RANGE = range(2, 10)
 
@@ -373,13 +387,13 @@ bw = estimate_bandwidth(
 param_grids = {
     "KMeans":                  ParameterGrid({"n_clusters": K_RANGE}),
     "Agglomerative":           ParameterGrid({"n_clusters": K_RANGE,
-                                               "linkage": ["ward","average","complete"]}),
+                                              "linkage": ["ward", "average", "complete"]}),
     "Birch":                   ParameterGrid({"n_clusters": K_RANGE}),
     "GMM":                     ParameterGrid({"n_components": K_RANGE}),
     "BayesianGaussianMixture": ParameterGrid({"n_components": K_RANGE}),
-    "DBSCAN":                  ParameterGrid({"eps":         [0.5,1.0,1.5,2.5,5.0],
-                                               "min_samples": [3,5,8]}),
-    "HDBSCAN":                 ParameterGrid({"min_cluster_size": [5,10,15]}),
+    "DBSCAN":                  ParameterGrid({"eps":         [0.5, 1.0, 1.5, 2.5, 5.0],
+                                              "min_samples": [3, 5, 8]}),
+    "HDBSCAN":                 ParameterGrid({"min_cluster_size": [5, 10, 15]}),
     "MeanShift":               ParameterGrid({"bandwidth": [bw, bw*1.5, bw*0.5]}),
     "AffinityPropagation":     ParameterGrid({"damping": [0.5, 0.9]}),
 }
@@ -389,9 +403,14 @@ DET_ALGS   = {"Agglomerative", "DBSCAN", "HDBSCAN", "MeanShift"}
 STOCH_ALGS = {"KMeans", "GMM", "BayesianGaussianMixture", "Birch", "AffinityPropagation"}
 
 # ============================================================
-# 7️⃣  FUNCIÓN DE OPTIMIZACIÓN
+# 7️⃣ CLUSTERING OPTIMIZATION & INTERNAL VALIDATION
 # ============================================================
 def optimize_clustering(alg_name: str, X: np.ndarray) -> dict:
+    """
+    Executes a parameter search for a specified clustering algorithm on embedding matrix X.
+    Evaluates partitions using Silhouette, Calinski-Harabasz, and Davies-Bouldin metrics.
+    Enforces noise/outlier constraints (< MAX_NOISE_PCT).
+    """
     best = {"score": -np.inf, "db": np.inf, "chi": -np.inf,
             "labels": None, "params": None, "noise": None,
             "n_clusters": 0, "seed": None}
@@ -404,7 +423,7 @@ def optimize_clustering(alg_name: str, X: np.ndarray) -> dict:
     for seed in seeds:
         for params in grid:
             try:
-                if alg_name in {"GMM","BayesianGaussianMixture"}:
+                if alg_name in {"GMM", "BayesianGaussianMixture"}:
                     if params.get("n_components", 2) >= X_arr.shape[0]:
                         continue
 
@@ -429,6 +448,7 @@ def optimize_clustering(alg_name: str, X: np.ndarray) -> dict:
                 db  = davies_bouldin_score(X_arr[mask], labels[mask])
                 chi = calinski_harabasz_score(X_arr[mask], labels[mask])
 
+                # Multi-objective criteria: Silhouette > Calinski-Harabasz > Davies-Bouldin
                 is_better = (
                     sil > best["score"] or
                     (sil == best["score"] and chi > best["chi"]) or
@@ -459,15 +479,15 @@ def optimize_clustering(alg_name: str, X: np.ndarray) -> dict:
     }
 
 # ============================================================
-# 8️⃣  BÚSQUEDA EXHAUSTIVA: todos los algoritmos × todos los embeddings
+# 8️⃣ EXHAUSTIVE BENCHMARKING ACROSS EMBEDDINGS
 # ============================================================
 print("\n" + "="*60)
-print("🔬 8. BÚSQUEDA DE CLUSTERING ÓPTIMO")
+print("🔬 STEP 8: SYSTEMATIC CLUSTERING GRID EXECUTION")
 print("="*60)
 
 rows = []
 for reduction_name, X_emb in embedding_matrices.items():
-    print(f"\n  ▶ {reduction_name} ({X_emb.shape[1]}D)")
+    print(f"\n  ▶ Testing: {reduction_name} ({X_emb.shape[1]}D)")
     for alg in alg_classes:
         res        = optimize_clustering(alg, X_emb)
         n_clusters = res.get("n_clusters_found", 0)
@@ -488,7 +508,7 @@ for reduction_name, X_emb in embedding_matrices.items():
                 "reduction":               reduction_name,
                 "seed":                    seed_used,
             })
-            print(f"    ✅ {alg:28s} K={n_clusters:2d} | "
+            print(f"    ✅ {alg:25s} K={n_clusters:2d} | "
                   f"Sil={res['best_score']:.3f} | "
                   f"DB={res['best_db']:.3f} | "
                   f"CH={res['best_chi']:.0f} | "
@@ -496,14 +516,14 @@ for reduction_name, X_emb in embedding_matrices.items():
         else:
             reason = (f"Noise={res['noise_pct']:.1f}%"
                       if (res["noise_pct"] or 0) > MAX_NOISE_PCT
-                      else "sin resultado válido")
-            print(f"    ❌ {alg:28s} {reason}")
+                      else "No valid cluster assignment")
+            print(f"    ❌ {alg:25s} {reason}")
 
 # ============================================================
-# 9️⃣  FILTRADO Y EXPORTACIÓN — CONSERVA TODOS LOS CLUSTERINGS
+# 9️⃣ MODEL FILTERING & EXPORT OF CLUSTER PARTITIONS
 # ============================================================
 print("\n" + "="*60)
-print("🏆 9. SELECCIÓN Y EXPORTACIÓN")
+print("🏆 STEP 9: SELECTION, STANDARDIZED NAMING, AND EXPORT")
 print("="*60)
 
 df_scores = pd.DataFrame(rows)
@@ -512,16 +532,16 @@ df_scores = df_scores[df_scores["labels"].notnull()].copy()
 df_selected = (
     df_scores[df_scores["score"] >= SILHOUETTE_THRESHOLD]
     .sort_values(
-        by=["score","Calinski-Harabasz Score","Davies-Bouldin Score","noise"],
+        by=["score", "Calinski-Harabasz Score", "Davies-Bouldin Score", "noise"],
         ascending=[False, False, True, True]
     )
     .reset_index(drop=True)
 )
 
 num_selected = len(df_selected)
-print(f"\n=== 🏆 Encontrados {num_selected} modelos con Silhouette Score >= {SILHOUETTE_THRESHOLD:.1f} (Ruido máximo {MAX_NOISE_PCT:.0f}%) ===")
+print(f"\n=== 🏆 Found {num_selected} models meeting Silhouette >= {SILHOUETTE_THRESHOLD:.2f} (Max noise {MAX_NOISE_PCT:.0f}%) ===")
 
-# ── Construir DataFrame de clusters: UNA COLUMNA POR CLUSTERING ──────────
+# Build final cluster matrix: one standardized column per configuration
 df_clusters_final = pd.DataFrame({"Model": patient_ids})
 
 for i, row in df_selected.iterrows():
@@ -539,33 +559,34 @@ for i, row in df_selected.iterrows():
         df_clusters_final[col_name] = labels
 
     if i < 10 or num_selected <= 10:
-        print(f"   {i+1:2d}. {row['reduction']:50s} | "
+        print(f"    {i+1:2d}. {row['reduction']:45s} | "
               f"{row['algorithm']:22s} | K={row['Optimal K/Comp']:2d} | "
               f"Seed={row['seed']} | Sil={row['score']:.4f} | "
-              f"Ruido={row['noise']:.2f}%")
+              f"Noise={row['noise']:.2f}%")
     elif i == 10:
-        print("   ... (Omitiendo modelos intermedios) ...")
+        print("    ... [Intermediate configurations omitted for brevity] ...")
 
 CLUSTERS_PATH = os.path.join(OUT_DIR, "PatientClusters_TumorPhenotype_UMAP.csv")
 df_clusters_final.to_csv(CLUSTERS_PATH, index=False)
-print(f"\n   ✅ {num_selected} clusterings guardados en: {CLUSTERS_PATH}")
+print(f"\n    ✅ All {num_selected} clustering assignments exported to: {CLUSTERS_PATH}")
 
 # ============================================================
-# 🖼️  10. GRÁFICAS UMAP (TOP 5 clusterings)
+# 🖼️ 10. VISUALIZATION (TOP 5 CLUSTERING SOLUTIONS)
 # ============================================================
 print("\n" + "="*60)
-print("📈 10. GRÁFICAS UMAP — TOP 5")
+print("📈 STEP 10: GENERATING TOP-RANKED UMAP PROJECTION PLOTS")
 print("="*60)
 
 def generate_umap_plots(df_top: pd.DataFrame,
                         emb_dict: dict,
                         output_dir: str,
                         top_n: int = 5) -> None:
+    """Generates 2D or 3D scatter plots for the top N ranking clustering models."""
     if df_top.empty:
-        print("   ⚠️  Sin modelos para graficar.")
+        print("    ⚠️  No valid models available to plot.")
         return
 
-    print(f"\n📈 Generando gráficas UMAP para los {min(top_n, len(df_top))} modelos con mejor Score...")
+    print(f"\n📈 Generating UMAP projection plots for top {min(top_n, len(df_top))} configurations...")
 
     for i, row in df_top.head(top_n).reset_index(drop=True).iterrows():
         emb_key   = row["reduction"]
@@ -579,11 +600,11 @@ def generate_umap_plots(df_top: pd.DataFrame,
                      f"{seed_str}")
         title     = (f"TOP {i+1}: {config}\n"
                      f"Silhouette={row['score']:.3f} | "
-                     f"K={row['Optimal K/Comp']} | Ruido={row['noise']:.1f}%")
+                     f"K={row['Optimal K/Comp']} | Noise={row['noise']:.1f}%")
         filename  = os.path.join(output_dir, f"TOP_{i+1}_{config}.png")
 
         if emb_key not in emb_dict:
-            print(f"   ⚠️  Embedding no encontrado: {emb_key}")
+            print(f"    ⚠️  Embedding key missing: {emb_key}")
             continue
 
         X_emb     = emb_dict[emb_key]
@@ -604,14 +625,15 @@ def generate_umap_plots(df_top: pd.DataFrame,
                 ax.scatter(X_emb[mask, 0], X_emb[mask, 1],
                            label=f"Cluster {cl}", color=cmap[cl],
                            alpha=0.7, s=50, edgecolors="none")
-            ax.set_xlabel("UMAP 1"); ax.set_ylabel("UMAP 2")
+            ax.set_xlabel("UMAP 1")
+            ax.set_ylabel("UMAP 2")
             ax.set_title(title, fontsize=10)
             ax.legend(title="Cluster", fontsize=8,
                       bbox_to_anchor=(1.02, 1), loc="upper left")
             plt.tight_layout()
             plt.savefig(filename, bbox_inches="tight")
             plt.close()
-            print(f"   > 2D guardada: {filename}")
+            print(f"    > 2D plot saved: {filename}")
 
         elif n_dims == 3:
             fig = plt.figure(figsize=(12, 10))
@@ -621,7 +643,8 @@ def generate_umap_plots(df_top: pd.DataFrame,
                 ax3.scatter(X_emb[mask, 0], X_emb[mask, 1], X_emb[mask, 2],
                             label=f"Cluster {cl}", color=cmap[cl],
                             alpha=0.7, s=40)
-            ax3.set_xlabel("UMAP 1"); ax3.set_ylabel("UMAP 2")
+            ax3.set_xlabel("UMAP 1")
+            ax3.set_ylabel("UMAP 2")
             ax3.set_zlabel("UMAP 3")
             ax3.set_title(title, fontsize=10)
             ax3.legend(title="Cluster", fontsize=7,
@@ -629,18 +652,19 @@ def generate_umap_plots(df_top: pd.DataFrame,
             plt.tight_layout()
             plt.savefig(filename, bbox_inches="tight")
             plt.close()
-            print(f"   > 3D guardada: {filename}")
+            print(f"    > 3D plot saved: {filename}")
 
 generate_umap_plots(df_selected, embedding_matrices, OUT_DIR)
 
 # ============================================================
-# 11. MERGE CON DATOS CLÍNICOS Y DE SUPERVIVENCIA
+# 11. MULTI-OMICS INTEGRATION: CLINICAL & SURVIVAL MERGE
 # ============================================================
 print("\n" + "="*60)
-print("🔗 11. MERGE CON DATOS CLÍNICOS")
+print("🔗 STEP 11: MERGING WITH CLINICAL AND SURVIVAL DATASETS")
 print("="*60)
 
 def load_clinical(path: str) -> pd.DataFrame:
+    """Reads clinical or survival tables (.tsv / .tsv.gz) and extracts standardized sample IDs."""
     try:
         df = (pd.read_csv(path, sep="\t", compression="gzip")
               if path.endswith(".gz")
@@ -651,7 +675,7 @@ def load_clinical(path: str) -> pd.DataFrame:
             df["Model"] = df["submitter_id"].apply(extract_model_id)
         return df
     except FileNotFoundError:
-        print(f"   ⚠️  No encontrado: {path}")
+        print(f"    ⚠️  File not found at: {path}")
         return pd.DataFrame({"Model": []})
 
 df_clinical = load_clinical(PATH_CLINICAL)
@@ -662,26 +686,26 @@ valid_models = set(df_features["Model"].unique())
 df_clinical_filt = df_clinical[df_clinical["Model"].isin(valid_models)]
 df_survival_filt = df_survival[df_survival["Model"].isin(valid_models)]
 
-base = df_raw[["Model","PatientID"]].drop_duplicates(subset="Model").copy()
+base = df_raw[["Model", "PatientID"]].drop_duplicates(subset="Model").copy()
 
 merged = base.copy()
 for right_df, name in [(df_clinical_filt, "Clinical"),
-                       (df_survival_filt,  "Survival")]:
+                       (df_survival_filt, "Survival")]:
     if not right_df.empty:
         merged = merged.merge(right_df.drop_duplicates(subset="Model"),
                               on="Model", how="left")
-        print(f"   ✅ Merge {name}: {len(right_df)} registros")
+        print(f"    ✅ Merged {name}: {len(right_df)} matching patient records")
     else:
-        print(f"   ⚠️  {name} vacío o sin coincidencias")
+        print(f"    ⚠️  {name} file yielded no matches or is empty")
 
-# ── CSV 1: clínica + features metabólicos (sin clusters) ─────────────────
+# Dataset 1: Clinical + metabolic features (without cluster labels)
 merged_feat = merged.merge(df_features, on="Model", how="left")
 
 OUT_BASE = os.path.join(OUT_DIR, "Merged_TumorPhenotype_UMAP_AllData.csv")
 merged_feat.to_csv(OUT_BASE, index=False)
-print(f"\n   ✅ Dataset base (clínica + features): {OUT_BASE}")
+print(f"\n    ✅ Base multi-omics dataset saved: {OUT_BASE}")
 
-# ── CSV 2: todo + todos los clusterings seleccionados ────────────────────
+# Dataset 2: Integrated table containing all valid clusterings
 try:
     df_cl        = pd.read_csv(CLUSTERS_PATH).drop_duplicates(subset="Model")
     cluster_cols = [c for c in df_cl.columns if c != "Model"]
@@ -692,51 +716,51 @@ try:
     OUT_FINAL = os.path.join(OUT_DIR,
                              "Merged_TumorPhenotype_UMAP_AllData_withClusters.csv")
     merged_final.to_csv(OUT_FINAL, index=False)
-    print(f"   ✅ Dataset final con {len(cluster_cols)} clusterings: {OUT_FINAL}")
+    print(f"    ✅ Final integrated matrix ({len(cluster_cols)} cluster models): {OUT_FINAL}")
 
     preview_cols = ["Model"] + cluster_cols[:3]
-    print("\n   Preview (primeros 3 clusterings):")
+    print("\n    Preview (first 3 cluster configurations):")
     print(merged_final[preview_cols].head(8).to_string(index=False))
 
 except FileNotFoundError:
-    print(f"   ⚠️  {CLUSTERS_PATH} no encontrado — merge de clusters omitido")
+    print(f"    ⚠️  {CLUSTERS_PATH} not found — skipping cluster merge")
 
 # ============================================================
-# 📊 REPORTE FINAL
+# 📋 FINAL REPORT
 # ============================================================
 print("\n" + "="*60)
-print("📋 REPORTE FINAL")
+print("📋 PIPELINE REPRODUCIBILITY & EXECUTION REPORT")
 print("="*60)
-print(f"   Modelos procesados           : {len(patient_ids)}")
-print(f"   Modo de features             : '{FEATURE_MODE}'")
-print(f"   Features originales          : {len(col_groups['secondary'])}")
-print(f"   Cols eliminadas (limpieza)   : {len(cols_to_drop)}")
-print(f"   Features finales             : {len(feature_cols)}")
+print(f"    Total cohort models processed      : {len(patient_ids)}")
+print(f"    Active feature extraction mode     : '{FEATURE_MODE}'")
+print(f"    Initial secondary feature count    : {len(col_groups['secondary'])}")
+print(f"    Pruned high-sparsity columns       : {len(cols_to_drop)}")
+print(f"    Final metabolic features scaled    : {len(feature_cols)}")
 if cols_to_drop:
-    print(f"\n   Primeras columnas eliminadas (>={ZERO_NULL_THRESHOLD*100:.0f}% ceros/nulos):")
+    print(f"\n    Sample pruned features (>= {ZERO_NULL_THRESHOLD*100:.0f}% zero/null):")
     for col, pct in cols_to_drop[:10]:
-        print(f"      • {col}: {pct*100:.1f}%")
+        print(f"       • {col}: {pct*100:.1f}%")
     if len(cols_to_drop) > 10:
-        print(f"      ... y {len(cols_to_drop)-10} más")
-print(f"\n   Embeddings UMAP generados    : {len(embedding_matrices)}")
-print(f"   Clusterings evaluados        : {len(rows)}")
-print(f"   Clusterings seleccionados    : {num_selected} (Sil >= {SILHOUETTE_THRESHOLD})")
+        print(f"       ... and {len(cols_to_drop)-10} more")
+print(f"\n    Generated UMAP manifold embeddings : {len(embedding_matrices)}")
+print(f"    Total clustering iterations        : {len(rows)}")
+print(f"    Models satisfying quality cutoff   : {num_selected} (Silhouette >= {SILHOUETTE_THRESHOLD})")
 
 if not df_selected.empty:
     top = df_selected.iloc[0]
-    print(f"\n   🥇 MEJOR CLUSTERING:")
-    print(f"      Embedding  : {top['reduction']}")
-    print(f"      Algoritmo  : {top['algorithm']}")
-    print(f"      K          : {top['Optimal K/Comp']}")
-    print(f"      Silhouette : {top['score']:.4f}")
-    print(f"      DB Score   : {top['Davies-Bouldin Score']:.4f}")
-    print(f"      CH Score   : {top['Calinski-Harabasz Score']:.0f}")
-    print(f"      Semilla    : {top['seed']}")
+    print(f"\n    🥇 OPTIMAL CLUSTERING SOLUTION:")
+    print(f"       Embedding   : {top['reduction']}")
+    print(f"       Algorithm   : {top['algorithm']}")
+    print(f"       K / Comps   : {top['Optimal K/Comp']}")
+    print(f"       Silhouette  : {top['score']:.4f}")
+    print(f"       DB Score    : {top['Davies-Bouldin Score']:.4f}")
+    print(f"       CH Score    : {top['Calinski-Harabasz Score']:.0f}")
+    print(f"       Random Seed : {top['seed']}")
 
-print(f"\n   Archivos generados:")
-print(f"      • {CLUSTERS_PATH}")
-print(f"      • {OUT_BASE}")
-print(f"      • {OUT_FINAL}")
-print(f"      • TOP_1 … TOP_5 gráficas .png")
+print(f"\n    Generated Output Files:")
+print(f"       • {CLUSTERS_PATH}")
+print(f"       • {OUT_BASE}")
+print(f"       • {OUT_FINAL}")
+print(f"       • Top-ranked projection plots (.png)")
 print("="*60)
-print("\n🎉 Pipeline completado exitosamente!")
+print("\n🎉 Pipeline finished successfully!")

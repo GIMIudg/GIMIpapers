@@ -33,18 +33,11 @@ BRCA_Metabolic_Flux_Analysis/
 
 ## How to Run
 
-### Option A — Google Colab (recommended)
+###  Local execution (recommended)
 
-1. Upload this folder to Google Drive (or clone the repo)
-2. Open `notebooks/BRCA_Metabolic_Flux_Pipeline.ipynb` in Google Colab
-3. Set runtime: **Runtime → Change runtime type → T4 GPU** (optional, speeds up UMAP)
-4. Run all cells: **Runtime → Run all**
-5. Expected runtime: ~60–90 min
-
-### Option B — Local execution
-
-```bash
-pip install umap-learn hdbscan lifelines openpyxl pingouin statsmodels
+```bash 
+create a virtualenv:  <https://docs.python.org/3/library/venv.html>
+install the requirements using: pip install equirements.txt
 jupyter notebook notebooks/BRCA_Metabolic_Flux_Pipeline.ipynb
 ```
 
