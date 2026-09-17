@@ -112,7 +112,7 @@ def detect_columns(df: pd.DataFrame) -> dict:
     Categorizes DataFrame columns into raw metabolic fluxes, secondary computed
     metrics, subsystem activities (SA), and oncometabolite turnover rates.
     """
-    all_cols = set(df.columns) - {"Model", "PatientID"}
+    all_cols = set(df.columns) - {"ModelName", "PatientID"}
     flux_cols = []
     secondary_cols = []
     missing_roots = []
@@ -185,22 +185,28 @@ except FileNotFoundError:
     raise FileNotFoundError(f"❌ Feature matrix file not found: {PATH_FEATURES}")
 
 # Standardize IDs
-df_raw["Model"] = df_raw["Model"].astype(str).apply(extract_model_id)
-df_raw["PatientID"] = df_raw["Model"].str.slice(0, 12)
+# NOTE: the source CSV's sample-identifier column is still named "Model" on disk;
+# we immediately rename it to "ModelName" so every downstream DataFrame,
+# merge key, and exported file consistently uses "ModelName".
+if "Model" in df_raw.columns and "ModelName" not in df_raw.columns:
+    df_raw = df_raw.rename(columns={"Model": "ModelName"})
+
+df_raw["ModelName"] = df_raw["ModelName"].astype(str).apply(extract_model_id)
+df_raw["PatientID"] = df_raw["ModelName"].str.slice(0, 12)
 
 n_total = len(df_raw)
-n_unique = df_raw["Model"].nunique()
+n_unique = df_raw["ModelName"].nunique()
 print(f"    Loaded metabolic models : {n_total}")
 print(f"    Unique model IDs        : {n_unique}")
 print(f"    Total raw columns       : {df_raw.shape[1]}")
 
 # Deduplication by Model ID
 if n_unique < n_total:
-    dups = df_raw[df_raw.duplicated(subset="Model", keep=False)]
+    dups = df_raw[df_raw.duplicated(subset="ModelName", keep=False)]
     print(f"\n    ⚠️  {n_total - n_unique} duplicate IDs detected:")
-    print(dups["Model"].value_counts().head(10).to_string())
+    print(dups["ModelName"].value_counts().head(10).to_string())
     print("    → Retaining the first occurrence per sample ID.")
-    df_raw = df_raw.drop_duplicates(subset="Model", keep="first").reset_index(drop=True)
+    df_raw = df_raw.drop_duplicates(subset="ModelName", keep="first").reset_index(drop=True)
     print(f"    Models remaining after deduplication: {len(df_raw)}")
 
 # ============================================================
@@ -222,7 +228,7 @@ if not feature_cols:
     raise ValueError("❌ No valid features found. Check METRIC_ROOTS and SOL_NAMES.")
 
 print(f"\n    ✅ Active mode: '{FEATURE_MODE}' → {len(feature_cols)} features selected")
-df_features = df_raw[["Model"] + feature_cols].copy()
+df_features = df_raw[["ModelName"] + feature_cols].copy()
 
 # ============================================================
 # 3️⃣ DATA CLEANING: LOW-VARIANCE & HIGH-SPARSITY PRUNING
@@ -276,7 +282,7 @@ if n_const > 0:
 # Step 4c: Robust scaling (resilient to biological flux outliers)
 scaler = RobustScaler()
 X_scaled = scaler.fit_transform(X_imp)
-patient_ids = df_features["Model"].values
+patient_ids = df_features["ModelName"].values
 
 print(f"    Final processed models   : {X_scaled.shape[0]}")
 print(f"    Final processed features : {X_scaled.shape[1]}")
@@ -534,7 +540,7 @@ num_selected = len(df_selected)
 print(f"\n=== Found {num_selected} clustering models satisfying Silhouette >= {SILHOUETTE_THRESHOLD:.2f} (Noise <= {MAX_NOISE_PCT:.0f}%) ===")
 
 # Build standardized clustering result matrix
-df_clusters_final = pd.DataFrame({"Model": patient_ids})
+df_clusters_final = pd.DataFrame({"ModelName": patient_ids})
 
 for i, row in df_selected.iterrows():
     labels = np.asarray(row["labels"])
@@ -691,55 +697,55 @@ def load_clinical(path: str) -> pd.DataFrame:
               if path.endswith(".gz")
               else pd.read_csv(path, sep="\t"))
         if "sample" in df.columns:
-            df["Model"] = df["sample"].apply(extract_model_id)
+            df["ModelName"] = df["sample"].apply(extract_model_id)
         elif "submitter_id" in df.columns:
-            df["Model"] = df["submitter_id"].apply(extract_model_id)
+            df["ModelName"] = df["submitter_id"].apply(extract_model_id)
         return df
     except FileNotFoundError:
         print(f"    ⚠️  File not found: {path}")
-        return pd.DataFrame({"Model": []})
+        return pd.DataFrame({"ModelName": []})
 
 df_clinical = load_clinical(PATH_CLINICAL)
 df_survival = load_clinical(PATH_SURVIVAL)
 
-valid_models = set(df_features["Model"].unique())
+valid_models = set(df_features["ModelName"].unique())
 
-df_clinical_filt = df_clinical[df_clinical["Model"].isin(valid_models)]
-df_survival_filt = df_survival[df_survival["Model"].isin(valid_models)]
+df_clinical_filt = df_clinical[df_clinical["ModelName"].isin(valid_models)]
+df_survival_filt = df_survival[df_survival["ModelName"].isin(valid_models)]
 
-base = df_raw[["Model", "PatientID"]].drop_duplicates(subset="Model").copy()
+base = df_raw[["ModelName", "PatientID"]].drop_duplicates(subset="ModelName").copy()
 
 merged = base.copy()
 for right_df, name in [(df_clinical_filt, "Clinical"),
                        (df_survival_filt, "Survival")]:
     if not right_df.empty:
         merged = merged.merge(
-            right_df.drop_duplicates(subset="Model"),
-            on="Model", how="left"
+            right_df.drop_duplicates(subset="ModelName"),
+            on="ModelName", how="left"
         )
         print(f"    ✅ Merged {name}: {len(right_df)} matched records")
     else:
         print(f"    ⚠️  {name} dataset empty or yielded no ID matches")
 
 # Export Dataset 1: Clinical + metabolic features (without cluster labels)
-merged_feat = merged.merge(df_features, on="Model", how="left")
+merged_feat = merged.merge(df_features, on="ModelName", how="left")
 OUT_BASE = os.path.join(OUT_DIR, "Merged_TumorPhenotype_PCA_AllData.csv")
 merged_feat.to_csv(OUT_BASE, index=False)
 print(f"\n    ✅ Base integrated matrix exported: {OUT_BASE}")
 
 # Export Dataset 2: Full dataset integrated with all valid cluster assignments
 try:
-    df_cl = pd.read_csv(CLUSTERS_PATH).drop_duplicates(subset="Model")
-    cluster_cols = [c for c in df_cl.columns if c != "Model"]
+    df_cl = pd.read_csv(CLUSTERS_PATH).drop_duplicates(subset="ModelName")
+    cluster_cols = [c for c in df_cl.columns if c != "ModelName"]
 
-    merged_final = merged_feat.merge(df_cl, on="Model", how="left")
+    merged_final = merged_feat.merge(df_cl, on="ModelName", how="left")
     merged_final[cluster_cols] = merged_final[cluster_cols].fillna(-1).astype(int)
 
     OUT_FINAL = os.path.join(OUT_DIR, "Merged_TumorPhenotype_PCA_AllData_withClusters.csv")
     merged_final.to_csv(OUT_FINAL, index=False)
     print(f"    ✅ Final multi-omics dataset with {len(cluster_cols)} cluster models exported: {OUT_FINAL}")
 
-    preview_cols = ["Model"] + cluster_cols[:3]
+    preview_cols = ["ModelName"] + cluster_cols[:3]
     print("\n    Preview (first 3 clustering configurations):")
     print(merged_final[preview_cols].head(8).to_string(index=False))
 

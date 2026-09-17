@@ -1,6 +1,11 @@
-modelsFolder = '/Users/eduardoruiz/Documents/MCBCI/MCBCI2/Sistemas metabólicos/Proyecto_Tesis/Modelos_actual';
-outputFileTXT = 'Models_ids.txt'; % ⬅️ Name of the new text file
-if exist(outputFileTXT,'file'), delete(outputFileTXT); end % ⬅️ Delete the .txt file if it already exists
+% Resolve paths relative to this script's location
+% Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> Unsupervised_learning_scripts_and_data/
+scriptDir    = fileparts(mfilename('fullpath'));
+dataRoot     = fullfile(scriptDir, '..', '..', 'Clinical_data_and_models_ids');
+modelsFolder = fullfile(dataRoot, 'All_models_created');
+outputDir    = fullfile(dataRoot, 'GEMs_Data_for_construction');
+outputFileTXT = fullfile(outputDir, 'Model''s_ids.txt'); % Output text file path
+if exist(outputFileTXT,'file'), delete(outputFileTXT); end % Delete if already exists
 
 %% ===========================
 initCobraToolbox(false);

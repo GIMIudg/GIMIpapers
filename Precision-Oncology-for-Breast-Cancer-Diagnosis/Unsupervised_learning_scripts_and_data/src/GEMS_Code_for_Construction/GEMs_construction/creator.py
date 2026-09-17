@@ -1,7 +1,13 @@
 from utils import print_header, print_step, print_footer
+from pathlib import Path
 import pandas as pd
 import mygene
 import os
+
+# Resolve data root relative to this script's location
+# Hierarchy: GEMs_construction/ -> GEMS_Code_for_Construction/ -> src/ -> Unsupervised_learning_scripts_and_data/
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_DATA_ROOT  = _SCRIPT_DIR.parents[2] / 'Clinical_data_and_models_ids'
 
 class XomicsFilesCreator:
     def __init__(self, input_path: str, output_path: str):
@@ -22,31 +28,31 @@ class XomicsFilesCreator:
         print_header()
         print_step("Loading data")
 
-        # Cargar datos de expresión (índice: Ensembl con versión)
+        # Load expression data (index: Ensembl IDs with version suffix)
         data = pd.read_csv(self.input_path, delimiter="\t", index_col=0)
         genes_with_version = data.index.to_list()
         genes = [g.split('.')[0] for g in genes_with_version]
 
         print_step("Mapping Ensembl to Entrez gene IDs using MyGene.info")
 
-        # Obtener IDs Entrez con mygene
+        # Retrieve Entrez IDs with mygene
         mg = mygene.MyGeneInfo()
         entries = mg.querymany(genes, scopes="ensembl.gene", fields="entrezgene", species="human", as_dataframe=True)
 
-        # Quitar genes sin mapeo válido
+        # Remove genes with no valid mapping
         entries = entries[entries['notfound'].isna() | (entries['notfound'] == False)]
         entrez_map = entries['entrezgene'].to_dict()
 
-        # Mapear Ensembl con versión → Entrez
+        # Map versioned Ensembl IDs → Entrez IDs
         entrez_ids = [entrez_map.get(g.split('.')[0], None) for g in genes_with_version]
 
-        # Filtrar genes sin entrez_id
+        # Filter out genes with no Entrez ID
         valid_idx = [i for i, eid in enumerate(entrez_ids) if eid is not None]
         genes_with_version = [genes_with_version[i] for i in valid_idx]
         entrez_ids = [entrez_ids[i] for i in valid_idx]
         data = data.iloc[valid_idx]
 
-        # Validar
+        # Validate dimensions
         assert len(entrez_ids) == data.shape[0], \
             f"Error: Length mismatch entrez_ids({len(entrez_ids)}), expression rows({data.shape[0]})"
 
@@ -69,9 +75,12 @@ class XomicsFilesCreator:
         print_footer()
 
 
-# Ejecutar
-input_path = "/Users/eduardoruiz/Documents/MCBCI/MCBCI2/Sistemas metabólicos/Modelos cancer/TCGA-BRCA_log_FPKM.tsv"
-output_path = "/Users/eduardoruiz/Documents/MCBCI/MCBCI2/Sistemas metabólicos/Modelos cancer/Gems2"
+# Entry point — paths resolved relative to Clinical_data_and_models_ids/
+input_path  = str(_DATA_ROOT / 'GEMs_Data_for_construction' / 'TCGA-BRCA_log_FPKM.tsv')
+output_path = str(_DATA_ROOT / 'GEMs_Data_for_construction' / 'Xomics_files')
+
+# Create output directory if it does not exist
+os.makedirs(output_path, exist_ok=True)
 
 generator = XomicsFilesCreator(input_path, output_path)
 generator.run_from_genomics()

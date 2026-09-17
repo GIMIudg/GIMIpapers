@@ -29,9 +29,15 @@ global SA_ALL_NAMES;
 %% =========================================================================
 %% 2. FILE PATHS, RUNTIME PARAMETERS & TARGET REACTIONS
 %% =========================================================================
-modelsFolder = '/Users/eduardoruiz/Documents/MCBCI/MCBCI2/Sistemas metabólicos/Proyecto_Tesis/Modelos_actual';
-outputFileCSV   = 'ParetoSurfacenew.csv';
-outputFileMAT   = 'ParetoSolutionsnew.mat';
+% Resolve paths relative to this script's location
+% Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> Unsupervised_learning_scripts_and_data/
+scriptDir    = fileparts(mfilename('fullpath'));
+dataRoot     = fullfile(scriptDir, '..', '..', 'Clinical_data_and_models_ids');
+modelsFolder = fullfile(dataRoot, 'All_models_created');
+outputDir    = fullfile(dataRoot, 'Metabolic_Data');
+
+outputFileCSV   = fullfile(outputDir, 'ParetoSurface_CU_EA_extended_1226_Final.csv');
+outputFileMAT   = fullfile(outputDir, 'ParetoSolutions.mat');
 if exist(outputFileCSV,'file'), delete(outputFileCSV); end
 if exist(outputFileMAT,'file'), delete(outputFileMAT); end
 

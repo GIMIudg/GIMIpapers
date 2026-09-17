@@ -20,9 +20,12 @@ _SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR = _SCRIPT_DIR.parents[2] / "Clinical_data_and_models_ids"
 
 # Input file paths
-# Update these paths to point to the clustering output CSVs from the clinical and metabolic scripts.
-path1 = _SCRIPT_DIR.parents[2] / "src" / "Clustering_and_data_analysis_PYTHON" / "Clinical_data_analysis" / "ML_models_using_clinical_data" / "Results_clustering_UMAP_seleccion_variables" / "pacientes_clusterizados_todos_sinfiltro.csv"
-path2 = _SCRIPT_DIR.parents[2] / "src" / "Clustering_and_data_analysis_PYTHON" / "Metabolic_data_analysis" / "ML_models_using_metabolic_data" / "resultados_TumorPhenotype_PCA_metrics" / "PatientClusters_TumorPhenotype_PCA.csv"
+# These point to clustering output CSVs produced by the clinical and metabolic pipeline scripts.
+# path1 → output of ML_clinical_data_UMAP_reduced_selection.py (Results_clustering_UMAP_reduced_selection/)
+# path2 → output of UMAP_FBA_pFBA_WL1_only.py or PCA_FBA_pFBA_WL1_only.py
+_SRC_DIR = _SCRIPT_DIR.parents[1]   # Clustering_and_data_analysis_PYTHON/
+path1 = _SRC_DIR / "Clinical_data_analysis" / "ML_models_using_clinical_data" / "Results_clustering_UMAP_reduced_selection" / "all_patients_clustered_no_filter.csv"
+path2 = _SRC_DIR / "Metabolic_data_analysis" / "ML_models_using_metabolic_data" / "results_TumorPhenotype_UMAP_metrics_updated_noL2" / "PatientClusters_TumorPhenotype_PCA.csv"
 
 
 def load_and_standardize_clusters(file_path, suffix, id_col='ModelName'):

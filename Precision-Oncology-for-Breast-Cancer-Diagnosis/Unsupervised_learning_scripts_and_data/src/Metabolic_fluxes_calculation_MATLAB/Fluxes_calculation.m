@@ -1,8 +1,13 @@
 initCobraToolbox(false);
 changeCobraSolver('gurobi','all');
 
+% Resolve paths relative to this script's location
+% Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> Unsupervised_learning_scripts_and_data/
+scriptDir    = fileparts(mfilename('fullpath'));
+dataRoot     = fullfile(scriptDir, '..', '..', 'Clinical_data_and_models_ids');
+folderPath   = fullfile(dataRoot, 'All_models_created');
+outputDir    = fullfile(dataRoot, 'Metabolic_Data');
 
-folderPath = 'C:\Users\aleja\Documents\Modelos_actual';
 files = dir(fullfile(folderPath, '*.mat'));
 disp(length(files))
 numModels = length(files);
@@ -463,12 +468,12 @@ end
 % =========================================================
 T_biomass = table(modelNames(:), maxBiomass(:), ...
                   'VariableNames', {'Model', 'MaxBiomass_FBA'});
-writetable(T_biomass, fullfile(folderPath, 'MaxBiomass_perModel.csv'));
+writetable(T_biomass, fullfile(outputDir, 'MaxBiomass_perModel.csv'));
 fprintf('\n✅ Maximum biomass saved.\n');
 
 featureTable       = array2table(featureMatrix, 'VariableNames', matlab.lang.makeValidName(colNames));
 featureTable.Model = modelNames;
-outFile = fullfile(folderPath, 'FeatureMatrix_TumorPhenotype_norm2agregado.csv');
+outFile = fullfile(outputDir, 'FeatureMatrix_TumorPhenotype_All.csv');
 writetable(featureTable, outFile);
 fprintf('\n✅ Complete feature matrix saved to:\n%s\n', outFile);
 fprintf('Dimensions: %d models x %d features\n', size(featureMatrix, 1), size(featureMatrix, 2));
