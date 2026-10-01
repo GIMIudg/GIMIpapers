@@ -67,7 +67,11 @@ class XomicsFilesCreator:
             })
 
             df_sample = df_sample.dropna(subset=["genes"])
-            df_sample = df_sample[df_sample["expVal"] != 0]
+            
+            # Treat duplicates correctly by taking the mean of their expression values
+            df_sample = df_sample.groupby("genes", as_index=False)["expVal"].mean()
+            
+            # We no longer drop genes with 0 expression to ensure no genes are deleted
 
             out_path = os.path.join(self.output_path, f"{sample}_Xomics.txt")
             df_sample.to_csv(out_path, index=False)
