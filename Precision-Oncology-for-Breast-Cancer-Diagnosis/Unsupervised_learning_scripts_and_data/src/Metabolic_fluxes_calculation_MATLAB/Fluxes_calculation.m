@@ -1,15 +1,70 @@
 initCobraToolbox(false);
-changeCobraSolver('gurobi','all');
+changeCobraSolver('matlab','all');
+%% 
 
-% Resolve paths relative to this script's location
+% ── Resolve paths relative to this script's location ──────────────────
 % Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> Unsupervised_learning_scripts_and_data/
-scriptDir    = fileparts(mfilename('fullpath'));
+%
+% MATLAB Live Editor copies files to a temp directory before running,
+% so mfilename('fullpath') may return a temp path.  We try multiple
+% candidates and accept the first one where the models folder exists.
+
+candidates = {};
+
+% Candidate 1: mfilename
+c1 = fileparts(mfilename('fullpath'));
+if ~isempty(c1), candidates{end+1} = c1; end
+
+% Candidate 2: which() — looks up the .m on MATLAB's path
+w = which('Fluxes_calculation');
+if ~isempty(w), candidates{end+1} = fileparts(w); end
+
+% Candidate 3: active editor document (skip temp paths)
+try
+    activeDoc = matlab.desktop.editor.getActive();
+    candidates{end+1} = fileparts(activeDoc.Filename);
+catch
+end
+
+% Candidate 4: current working directory
+candidates{end+1} = pwd;
+
+% Test each candidate: accept the first one where All_models_created/ exists
+scriptDir = '';
+for k = 1:length(candidates)
+    testFolder = fullfile(candidates{k}, '..', '..', ...
+                          'Clinical_data_and_models_ids', 'All_models_created');
+    if exist(testFolder, 'dir')
+        scriptDir = candidates{k};
+        break
+    end
+end
+
+if isempty(scriptDir)
+    fprintf('\n❌ None of the candidate paths contain the models folder:\n');
+    for k = 1:length(candidates)
+        fprintf('   [%d] %s\n', k, candidates{k});
+    end
+    error(['Could not locate the models.\n' ...
+           'In MATLAB, run:\n' ...
+           '  cd ''<repo>/Unsupervised_learning_scripts_and_data/src/Metabolic_fluxes_calculation_MATLAB''\n' ...
+           'then re-run the script.']);
+end
+
 dataRoot     = fullfile(scriptDir, '..', '..', 'Clinical_data_and_models_ids');
 folderPath   = fullfile(dataRoot, 'All_models_created');
 outputDir    = fullfile(dataRoot, 'Metabolic_Data');
 
+% Create output directory if it doesn't exist
+if ~exist(outputDir, 'dir'), mkdir(outputDir); end
+
+fprintf('\n── Path diagnostics ──\n');
+fprintf('  scriptDir  : %s\n', scriptDir);
+fprintf('  folderPath : %s\n', folderPath);
+fprintf('  outputDir  : %s\n', outputDir);
+
 files = dir(fullfile(folderPath, '*.mat'));
-disp(length(files))
+fprintf('  Models detected: %d\n\n', length(files));
 numModels = length(files);
 
 featureMatrix = [];
@@ -107,6 +162,11 @@ for modelIdx = 1:numModels
     masterSubsystems = union(masterSubsystems, ss);
 end
 
+% The master list of subsystems collected from all models — used both
+% inside the analysis loop (Subsystem Activity) and later for column names.
+subSystemsToTrack = masterSubsystems;
+fprintf('Master reactions: %d | Master subsystems: %d\n', ...
+        length(masterRxns), length(subSystemsToTrack));
 
 % =========================================================
 % === STEP 2: MAIN ANALYSIS LOOP ===
@@ -138,20 +198,19 @@ for modelIdx = 1:numModels
         modelNames{end+1} = strrep(modelName, '.mat', '');
         continue
     end
-    subSystemsToTrack = masterSubsystems;
+
     % -------------------------------------------------------
     % OPTIMIZATIONS
     % -------------------------------------------------------
-
     % SOL 1: FBA — maximize biomass
     sol_FBA = optimizeCbModel(changeObjective(model,biomassRxn));
-
     if sol_FBA.stat == 1
         bioVal = sol_FBA.f;
     else
         warning('⚠️  FBA without optimal solution for: %s (stat=%d)', modelName, sol_FBA.stat);
         bioVal = NaN;
     end
+
     model1 = model;
     % SOL 2: pFBA — minimize total flux (L1) at biomass optimum
     model_pFBA           = model1;
@@ -159,12 +218,40 @@ for modelIdx = 1:numModels
     sol_pFBA             = optimizeCbModel(model_pFBA, 'min', 'one');
 
     % SOL 3: L1 weighted by gene expression
-    model2 = model;
-    model_L1w            = model2;
-    model_L1w.lb(bioIdx)  = sol_FBA.f * 0.99;
-    model_L1w.expressionRxns(isnan(model_L1w.expressionRxns)) = 0;
-    weights_L1           = model_L1w.expressionRxns + abs(min(model_L1w.expressionRxns)) + 1e-6;
-    sol_L1w              = optimizeCbModel(model_L1w, 'min', weights_L1);
+    model2                = model;
+    model_L1w              = model2;
+    model_L1w.lb(bioIdx)    = sol_FBA.f * 0.99;
+
+    % --- FIX: alinear longitud de expressionRxns con rxns esto porque se agregaron 2 reacciones biomass_ex y ATP_hydrolisis ---
+    nRxns_L1w   = length(model_L1w.rxns);
+    nExpr_L1w   = length(model_L1w.expressionRxns);
+    diffLen_L1w = nRxns_L1w - nExpr_L1w;
+
+    if diffLen_L1w > 0
+        model_L1w.expressionRxns(end+1:end+diffLen_L1w) = 0;  % reacciones añadidas al final
+    elseif diffLen_L1w < 0
+        warning('expressionRxns más largo que rxns en %s, usando ''one''.', modelName);
+        model_L1w.expressionRxns = [];
+    end
+
+    if ~isempty(model_L1w.expressionRxns)
+        expr = model_L1w.expressionRxns(:);
+        expr(isnan(expr)) = 0;
+        weights_L1 = expr + abs(min(expr)) + 1e-6;
+
+        if length(weights_L1) ~= nRxns_L1w
+            warning('weights_L1 quedó con %d elementos (se esperaban %d) en %s. Usando ''one''.', ...
+                     length(weights_L1), nRxns_L1w, modelName);
+            weights_L1 = 'one';
+        end
+    else
+        weights_L1 = 'one';
+    end
+
+    fprintf('  [check L1w] rxns=%d expr=%d weights=%s\n', ...
+            nRxns_L1w, length(model_L1w.expressionRxns), mat2str(size(weights_L1)));
+
+    sol_L1w = optimizeCbModel(model_L1w, 'min', weights_L1);
 
     % SOL 4: L2 — minimize Euclidean norm of fluxes
     model3 = model;
@@ -173,25 +260,83 @@ for modelIdx = 1:numModels
     sol_L2               = optimizeCbModel(model_L2, 'min', 1e-6);
 
     if sol_L2.stat ~= 1
-        warning('⚠️  L2 without optimal solution for: %s (stat=%d)', modelName, sol_L2.stat);  % FIX: was fileName
+        warning('⚠️  L2 without optimal solution for: %s (stat=%d)', modelName, sol_L2.stat);
         sol_L2.x = zeros(length(model.rxns), 1);
     end
 
     % SOL 5: L2 weighted by gene expression
-    model4 = model;
-    model_L2w            = model4;
-    model_L2w.lb(bioIdx)  = sol_FBA.f * 0.99;
-    model_L2w.expressionRxns(isnan(model_L2w.expressionRxns)) = 0;
-    weights_L2           = model_L2w.expressionRxns + abs(min(model_L2w.expressionRxns)) + 1e-6;
-    sol_L2w              = optimizeCbModel(model_L2w, 'min', weights_L2 * 1e-6);
+    model4                = model;
+    model_L2w              = model4;
+    model_L2w.lb(bioIdx)    = sol_FBA.f * 0.99;
+
+    % --- FIX: alinear longitud de expressionRxns con rxns ---
+    nRxns_L2w   = length(model_L2w.rxns);
+    nExpr_L2w   = length(model_L2w.expressionRxns);
+    diffLen_L2w = nRxns_L2w - nExpr_L2w;
+
+    if diffLen_L2w > 0
+        model_L2w.expressionRxns(end+1:end+diffLen_L2w) = 0;
+    elseif diffLen_L2w < 0
+        warning('expressionRxns más largo que rxns en %s, usando ''one''.', modelName);
+        model_L2w.expressionRxns = [];
+    end
+
+    if ~isempty(model_L2w.expressionRxns)
+        expr2 = model_L2w.expressionRxns(:);
+        expr2(isnan(expr2)) = 0;
+        weights_L2 = expr2 + abs(min(expr2)) + 1e-6;
+
+        if length(weights_L2) ~= nRxns_L2w
+            warning('weights_L2 quedó con %d elementos (se esperaban %d) en %s. Usando ''one''.', ...
+                     length(weights_L2), nRxns_L2w, modelName);
+            weights_L2 = 'one';
+        end
+    else
+        weights_L2 = 'one';
+    end
+
+    fprintf('  [check L2w] rxns=%d expr=%d weights=%s\n', ...
+            nRxns_L2w, length(model_L2w.expressionRxns), mat2str(size(weights_L2)));
+
+    if isnumeric(weights_L2)
+        sol_L2w = optimizeCbModel(model_L2w, 'min', weights_L2 * 1e-6);
+    else
+        sol_L2w = optimizeCbModel(model_L2w, 'min', weights_L2);
+    end
 
     if sol_L2w.stat ~= 1
-        warning('⚠️  L2w without optimal solution for: %s (stat=%d)', modelName, sol_L2w.stat);  % FIX: was fileName
+        warning('⚠️  L2w without optimal solution for: %s (stat=%d)', modelName, sol_L2w.stat);
         sol_L2w.x = zeros(length(model.rxns), 1);
     end
 
-    fluxSolutions = {sol_FBA.x, sol_pFBA.x, sol_L1w.x, sol_L2.x, sol_L2w.x};
+        fluxSolutions = {sol_FBA.x, sol_pFBA.x, sol_L1w.x, sol_L2.x, sol_L2w.x};
     solList       = {sol_FBA,   sol_pFBA,   sol_L1w,   sol_L2,   sol_L2w};
+
+    % -------------------------------------------------------
+    % FIX: Sanear todas las soluciones a longitud consistente.
+    % Si el solver no encontró solución óptima (stat ~= 1) o el
+    % vector .x viene vacío/con longitud incorrecta, se reemplaza
+    % por un vector de ceros del tamaño correcto para evitar
+    % errores de indexación más adelante (calcRobustSum, CU, EA, etc.)
+    % -------------------------------------------------------
+    nModelRxns = length(model.rxns);
+    for s = 1:nSols
+        xVec = fluxSolutions{s};
+        solStat = NaN;
+        if isfield(solList{s}, 'stat')
+            solStat = solList{s}.stat;
+        end
+
+        if isempty(xVec) || length(xVec) ~= nModelRxns
+            warning(['fluxSolutions{%d} (%s) inválido (stat=%d, %d elementos, ' ...
+                     'se esperaban %d) en %s. Se reemplaza por ceros.'], ...
+                     s, solNames{s}, solStat, length(xVec), nModelRxns, modelName);
+            fluxSolutions{s} = zeros(nModelRxns, 1);
+            solList{s}.x = zeros(nModelRxns, 1);   % mantener solList consistente también
+        else
+            fluxSolutions{s} = xVec(:);            % forzar columna
+        end
+    end
 
     % Biomass flux (for normalization)
     bioFlux = sol_FBA.f;
@@ -201,9 +346,28 @@ for modelIdx = 1:numModels
     % FLUX VECTOR (masterRxns x nSols)
     % -------------------------------------------------------
     fluxVector = zeros(1, length(masterRxns) * nSols);
-    [~, idxInMaster] = ismember(model.rxns, masterRxns);
+
+    nModelRxns        = length(model.rxns);
+    [tf, idxInMaster]  = ismember(model.rxns, masterRxns);
+
+    % Solo usar posiciones donde realmente hubo match en masterRxns
+    validMaskBase = tf;
+
     for s = 1:nSols
-        fluxVector((s-1)*length(masterRxns) + idxInMaster) = fluxSolutions{s};
+        xVec = fluxSolutions{s};
+        xVec = xVec(:);  % forzar columna para comparar longitudes de forma consistente
+
+        if length(xVec) ~= nModelRxns
+            warning(['fluxSolutions{%d} (%s) tiene %d elementos, se esperaban %d ' ...
+                     '(model.rxns) en %s. Se omite esta solución del vector de flujos.'], ...
+                     s, solNames{s}, length(xVec), nModelRxns, modelName);
+            continue;  % deja esos bins en 0 para este modelo/solución
+        end
+
+        validIdx = idxInMaster(validMaskBase);
+        validX   = xVec(validMaskBase);
+
+        fluxVector((s-1)*length(masterRxns) + validIdx) = validX;
     end
 
     % -------------------------------------------------------
@@ -479,9 +643,10 @@ fprintf('\n✅ Complete feature matrix saved to:\n%s\n', outFile);
 fprintf('Dimensions: %d models x %d features\n', size(featureMatrix, 1), size(featureMatrix, 2));
 
 % =========================================================
-% === HELPER FUNCTIONS ===
+% ===  FUNCTIONS ===
 % =========================================================
 
+%% 
 
 function result = calcRobustSum(flux, model, rxnIDs)
     total  = 0;
