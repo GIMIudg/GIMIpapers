@@ -1,5 +1,5 @@
 # Precision Oncology for Breast Cancer Diagnosis
-Master’s Thesis Research Repository
+Masterâ€™s Thesis Research Repository
 
 ## Overview
 
@@ -20,7 +20,7 @@ This script reads all models and save them into a txt. document.
 
 This script creats the pareto surface maximazing biomass and ATP while minimizing Carbon Uptake and Enzyme abundance.
 
-## `/Norms_1_2_fluxes-nurvo.mlx`
+## `/Fluxes_calculation.mlx`
 
 This script calculates FBA, pFBA, WL1, L2, WL2 and secundary fluxes.
 
