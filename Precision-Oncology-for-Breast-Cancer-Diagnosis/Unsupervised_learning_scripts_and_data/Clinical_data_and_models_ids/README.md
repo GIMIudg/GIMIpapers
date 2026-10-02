@@ -21,7 +21,7 @@ It includes:
 - Transcriptomic data from 1,226 patients
 - Input data required for model reconstruction
 - A list of all generated metabolic models
-
+- Xomics files for Models creation
 ---
 
 ## `/Metabolic_Data`
