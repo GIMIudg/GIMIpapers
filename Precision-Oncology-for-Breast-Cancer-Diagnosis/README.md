@@ -15,7 +15,7 @@ Precision-Oncology-for-Breast-Cancer-Diagnosis/
 ├── Unsupervised_learning_scripts_and_data/
 │   ├── Clinical_data_and_models_ids/      ← Clinical metadata and GEM files
 │   │   ├── All_models_created/            ← Contains all 1,226 generated models
-│   │   ├── Clinical_Data/                 ← Downloaded clinical and survival datasets
+│   │   ├── Clinical_Data/                 ← Downloaded clinical and survival datasets. Metadata was downloaded from [UCSC Xena](https://xena.ucsc.edu/), while the clinical and survival data were obtained from [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA).
 │   │   ├── GEMs_Data_for_construction/    ← Data used during GEMs construction
 │   │   └── Metabolic_Data/                ← Flux results and Pareto solutions
 │   └── src/                               ← Analysis scripts (MATLAB, Python, R)
@@ -26,11 +26,7 @@ Precision-Oncology-for-Breast-Cancer-Diagnosis/
 └── README.md                              ← Project overview & reproducibility guide
 ```
 
-The necessary datasets, clinical parameters, and pre-computed models are located inside the `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids` directory:
-- **`Clinical_Data/`**: Contains the downloaded files used for analysis. The Metadata was downloaded from [UCSC Xena](https://xena.ucsc.edu/), while the clinical and survival data were obtained from [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA).
-- **`Metabolic_Data/`**: Contains the metabolic flux results computed via FBA, FBAp, L1w, L2, L2w (`FeatureMatrix_TumorPhenotype_All.csv`) and the multi-objective Pareto solutions (`ParetoSurface_CU_EA_extended_1226_Final_100soluciones.csv`).
-- **`All_models_created/`**: Stores the output 1,226 patient-specific models.
-- **`GEMs_Data_for_construction/`**: Holds the necessary files and scripts required to build the models.
+- **`Clinical_Data/`**: Contains the downloaded files used for analysis. 
 
 ## How to Run
 
