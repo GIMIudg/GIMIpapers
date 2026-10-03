@@ -24,13 +24,6 @@ Precision-Oncology-for-Breast-Cancer-Diagnosis/
 └── README.md                              ← Project overview & reproducibility guide
 ```
 
-### Data Files and Repositories
-The necessary datasets, clinical parameters, and pre-computed models are located inside the `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids` directory. 
-- **`Clinical_Data/`**: Contains the downloaded files used for analysis (`MetaData.xlsx`, `TCGA-BRCA.clinical.tsv`, `TCGA-BRCA.survival.tsv.gz`).
-- **`Metabolic_Data/`**: Contains the metabolic flux results computed via FBA, FBAp, L1w, L2, L2w (`FeatureMatrix_TumorPhenotype_All.csv`) and the multi-objective Pareto solutions (`ParetoSurface_CU_EA_extended_1226_Final_100soluciones.csv`).
-
----
-
 ## How to Run
 
 ### Environment Setup (Python)
