@@ -26,8 +26,7 @@ Precision-Oncology-for-Breast-Cancer-Diagnosis/
 └── README.md                              ← Project overview & reproducibility guide
 ```
 
-### Data Files and Repositories
-The necessary datasets, clinical parameters, and pre-computed models are located inside the `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids` directory. 
+The necessary datasets, clinical parameters, and pre-computed models are located inside the `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids` directory:
 - **`Clinical_Data/`**: Contains the downloaded files used for analysis. The Metadata was downloaded from [UCSC Xena](https://xena.ucsc.edu/), while the clinical and survival data were obtained from [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA).
 - **`Metabolic_Data/`**: Contains the metabolic flux results computed via FBA, FBAp, L1w, L2, L2w (`FeatureMatrix_TumorPhenotype_All.csv`) and the multi-objective Pareto solutions (`ParetoSurface_CU_EA_extended_1226_Final_100soluciones.csv`).
 - **`All_models_created/`**: Stores the output 1,226 patient-specific models.
@@ -70,7 +69,8 @@ To construct the metabolic models, we utilized "Recon3D_301.mat" as the base mod
 5. **Bibliomic Data:** Simultaneously, an Excel file named `Bibliomics_Data` was curated. It contains a list of genes associated with breast cancer, the mandatory inclusion of a biomass reaction, and specific constraints required to generate consistent personalized models.
 
 #### Model Construction
-- **Script:** A MATLAB script named `Construction_Gems` was used. The `xomicsToModel` tool utilizes the gene expression and bibliomics data to find all possible reactions given the selected genes, ensuring the models are thermodynamically consistent (Reference: Preciat, G., Wegrzyn, A.B., Luo, X. et al. XomicsToModel: omics data integration and generation of thermodynamically consistent metabolic models. Nat Protoc 21, 2665–2706 (2026). https://doi.org/10.1038/s41596-025-01288-9).
+- **Script:** A MATLAB script named `Construction_Gems` was used. The `xomicsToModel` tool utilizes the gene expression and bibliomics data to find all possible reactions given the selected genes, ensuring the models are thermodynamically consistent. This procedure is based on the methodology described in:
+  > Preciat, G., Wegrzyn, A.B., Luo, X. et al. (2026). XomicsToModel: omics data integration and generation of thermodynamically consistent metabolic models. *Nat Protoc*, 21, 2665–2706. [https://doi.org/10.1038/s41596-025-01288-9](https://doi.org/10.1038/s41596-025-01288-9)
 - **Data directory:** `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids/GEMs_Data_for_construction`
 - **Code directory:** `Unsupervised_learning_scripts_and_data/src/GEMS_Code_for_Construction/GEMs_construction`
 
