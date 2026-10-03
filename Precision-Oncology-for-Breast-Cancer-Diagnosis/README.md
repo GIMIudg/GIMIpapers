@@ -26,7 +26,7 @@ Precision-Oncology-for-Breast-Cancer-Diagnosis/
 └── README.md                              ← Project overview & reproducibility guide
 ```
 
-- **`Clinical_Data/`**: Contains the downloaded files used for analysis. 
+- **`Clinical_Data/`**: Metadata was downloaded from [UCSC Xena](https://xena.ucsc.edu/), while the clinical and survival data were obtained from [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA).
 
 ## How to Run
 
