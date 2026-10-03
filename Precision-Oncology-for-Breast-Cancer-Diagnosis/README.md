@@ -51,7 +51,7 @@ Follow the steps below to fully reproduce the results of this project across the
 
 ### 1. Creation of Metabolic Models
 
-To construct the metabolic models, we used the base version containing known human metabolic reactions "Recon3D_301.mat". Using the `xomicsToModel` algorithm implemented in the COBRAToolbox, 1,226 patient-specific breast cancer models were created.
+To construct the metabolic models, we utilized "Recon3D_301.mat" as the base model, which contains all known human metabolic reactions. Using the `xomicsToModel` algorithm implemented in the COBRAToolbox, 1,226 patient-specific breast cancer models were created.
 
 #### Data Processing
 1. **Gene Expression Data:** Gene expression profiles for 1,226 breast cancer patients were obtained from the TCGA (The Cancer Genome Atlas) project.
@@ -61,7 +61,7 @@ To construct the metabolic models, we used the base version containing known hum
 5. **Bibliomic Data:** Simultaneously, an Excel file named `Bibliomics_Data` was curated. It contains a list of genes associated with breast cancer, the mandatory inclusion of a biomass reaction, and specific constraints required to generate consistent personalized models.
 
 #### Model Construction
-- **Script:** A MATLAB script named `Construction_Gems` was used. The `xomicsToModel` tool utilizes the gene expression and bibliomics data to find all possible reactions given the selected genes, ensuring the models are thermodynamically consistent (Reference: Preciat).
+- **Script:** A MATLAB script named `Construction_Gems` was used. The `xomicsToModel` tool utilizes the gene expression and bibliomics data to find all possible reactions given the selected genes, ensuring the models are thermodynamically consistent (Reference: Preciat, G., Wegrzyn, A.B., Luo, X. et al. XomicsToModel: omics data integration and generation of thermodynamically consistent metabolic models. Nat Protoc 21, 2665–2706 (2026). https://doi.org/10.1038/s41596-025-01288-9).
 - **Data directory:** `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids/GEMs_Data_for_construction`
 - **Code directory:** `Unsupervised_learning_scripts_and_data/src/GEMS_Code_for_Construction/GEMs_construction`
 
@@ -82,11 +82,11 @@ Once the models were built, various general and secondary metabolic fluxes were 
 A pipeline was designed for processing metabolic data and incorporating it into supervised learning models to predict whether samples are tumor or normal tissue.
 
 - **Directory:** `main_notebook/`
-- **Dependencies:** Python algorithms require exact library versions to function correctly. Please install them using the `requirements.txt` file located in the root of the repository.
+- **Dependencies:** Python algorithms require exact library versions to ensure reproducibility, as updates to libraries may alter random number generation or specific metric calculations. Please install them using the `requirements.txt` file located in the root of the repository.
 
 ### 4. Unsupervised Learning and Clinical/Metabolic Correlations
 
-We searched for correlations between clinical and metabolic data using unsupervised learning models and statistical metrics.
+We then searched for correlations between clinical and metabolic data using unsupervised learning models and statistical metrics.
 
 #### Clinical Data Analysis
 Clinical data was processed by performing a refined selection of variables across different datasets. Two dimensionality reduction methods (PCA and UMAP) and various unsupervised learning models were applied.
@@ -117,7 +117,7 @@ Finally, significant differences and effect sizes between groups were analyzed.
 
 ## What the Notebook Produces
 
-### Supervised Learning (Sections 4)
+### Supervised Learning 
 | Figure | Description |
 |---|---|
 | `Fig04_UMAP_before_after_feature_selection.png` | UMAP projection before/after feature selection |
@@ -125,7 +125,7 @@ Finally, significant differences and effect sizes between groups were analyzed.
 | `Fig06_ROC_AUC_curves.png` | ROC-AUC curves for all 5 classifiers |
 | `Fig07_decision_matrix.png` | Multi-criteria classifier comparison heatmap |
 
-### Unsupervised Clustering (Sections 5–8)
+### Unsupervised Clustering 
 | Figure | Description |
 |---|---|
 | `Fig09_clinical_cluster_3D.png` | Clinical patient clustering — 3D view |
@@ -133,15 +133,6 @@ Finally, significant differences and effect sizes between groups were analyzed.
 | `Fig08_top10_ARI_heatmap.png` | Top 10 concordances (ARI) clinical vs metabolic |
 | `Fig02_contingency_matrix.png` | Patient distribution clinical vs metabolic clusters |
 | `Fig03_cohort_pie.png` | Cohort composition: Core vs Divergent |
-
-### Divergent Subgroup Analysis (Sections 9–13)
-| Figure | Description |
-|---|---|
-| `Fig11_CliffsDelta_forest_plot.png` | Top 40 metabolic features — Cliff's delta effect sizes |
-| `Fig12_KaplanMeier_survival.png` | Kaplan–Meier overall survival curves |
-| `Fig13_heatmap_metabolic_signatures_subtypes.png` | Metabolic signatures across molecular subtypes |
-| `Fig03_metabolic_pathways_bubble.png` | Significantly altered metabolic pathways |
-| `Fig_Pareto_panel.png` | Pareto front multi-objective trade-offs |
 
 ---
 
