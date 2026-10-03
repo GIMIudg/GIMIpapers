@@ -51,7 +51,7 @@ Follow the steps below to fully reproduce the results of this project across the
 
 ### 1. Creation of Metabolic Models
 
-To construct the metabolic models, we used the base version containing known human metabolic reactions. Using the `xomicsToModel` algorithm implemented in the COBRAToolbox, 1,226 patient-specific breast cancer models were created.
+To construct the metabolic models, we used the base version containing known human metabolic reactions "Recon3D_301.mat". Using the `xomicsToModel` algorithm implemented in the COBRAToolbox, 1,226 patient-specific breast cancer models were created.
 
 #### Data Processing
 1. **Gene Expression Data:** Gene expression profiles for 1,226 breast cancer patients were obtained from the TCGA (The Cancer Genome Atlas) project.
