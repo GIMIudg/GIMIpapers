@@ -11,35 +11,114 @@ Reproducible Google Colab notebook for the paper:
 ## Project Structure
 
 ```
-BRCA_Metabolic_Flux_Analysis/
-├── notebooks/
-│   └── BRCA_Metabolic_Flux_Pipeline.ipynb   ← Main Google Colab notebook
-├── data/
-│   ├── MetaData.xlsx                          ← Molecular metadata (ER, PR, HER2, Subtype, Ancestry)
-│   ├── Model's_ids.txt                        ← List of 1,226 patient-specific GEM IDs
-│   └── TCGA-BRCA.survival.tsv.gz             ← Overall survival data (OS.time, OS)
-└── results/                                   ← (Created at runtime in Colab)
+Precision-Oncology-for-Breast-Cancer-Diagnosis/
+├── Unsupervised_learning_scripts_and_data/
+│   ├── Clinical_data_and_models_ids/      ← Clinical metadata and GEM files
+│   │   ├── Clinical_Data/                 ← Contains downloaded clinical and survival datasets
+│   │   └── Metabolic_Data/                ← Contains flux results and Pareto solutions
+│   └── src/                               ← Analysis scripts (MATLAB, Python, R)
+├── main_notebook/
+│   ├── BRCA_Paired_Patient_Classification.ipynb ← Supervised learning notebook
+│   └── Figures/                           ← Output figures and plots
+├── requirements.txt                       ← Python dependencies
+└── README.md                              ← Project overview & reproducibility guide
 ```
 
-### Large Files — Automatically Downloaded in Colab
-
-| File | Source | Size |
-|---|---|---|
-| `FeatureMatrix_TumorPhenotype_All.csv` | GitHub LFS (GIMIpapers) | ~179 MB |
-| `TCGA-BRCA.clinical.tsv` | TCGA GDC | ~5 MB |
-| `ParetoSurface_*.csv` | GitHub LFS (GIMIpapers) | ~10–100 MB |
+### Data Files and Repositories
+The necessary datasets, clinical parameters, and pre-computed models are located inside the `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids` directory. 
+- **`Clinical_Data/`**: Contains the downloaded files used for analysis (`MetaData.xlsx`, `TCGA-BRCA.clinical.tsv`, `TCGA-BRCA.survival.tsv.gz`).
+- **`Metabolic_Data/`**: Contains the metabolic flux results computed via FBA, FBAp, L1w, L2, L2w (`FeatureMatrix_TumorPhenotype_All.csv`) and the multi-objective Pareto solutions (`ParetoSurface_CU_EA_extended_1226_Final_100soluciones.csv`).
 
 ---
 
 ## How to Run
 
-###  Local execution (recommended)
+### Environment Setup (Python)
+
+It is highly recommended to use a virtual environment to avoid dependency conflicts:
 
 ```bash 
-create a virtualenv:  <https://docs.python.org/3/library/venv.html>
-install the requirements using: pip install equirements.txt
-jupyter notebook notebooks/BRCA_Metabolic_Flux_Pipeline.ipynb
+# Create a virtual environment
+python3 -m venv env
+source env/bin/activate  # On Windows use: env\Scripts\activate
+
+# Install the required dependencies
+pip install -r requirements.txt
+
+# Launch Jupyter Notebook
+jupyter notebook
 ```
+Then, you can open `main_notebook/BRCA_Paired_Patient_Classification.ipynb` to execute the supervised learning pipeline. For the rest of the analyses, follow the **Detailed Reproducibility Guide** below.
+
+---
+
+## Detailed Reproducibility Guide
+
+Follow the steps below to fully reproduce the results of this project across the various scripts. It is highly recommended to install the dependencies listed in `requirements.txt` to ensure the Python algorithms run exactly as intended.
+
+### 1. Creation of Metabolic Models
+
+To construct the metabolic models, we used the base version containing known human metabolic reactions. Using the `xomicsToModel` algorithm implemented in the COBRAToolbox, 1,226 patient-specific breast cancer models were created.
+
+#### Data Processing
+1. **Gene Expression Data:** Gene expression profiles for 1,226 breast cancer patients were obtained from the TCGA (The Cancer Genome Atlas) project.
+2. **Structuring:** The data was structured into an individual `.txt` file per patient.
+3. **Preprocessing:** During preprocessing, we found that multiple Ensembl identifiers mapped to the same Entrez ID. To resolve this and prevent gene duplication, we calculated the average of their corresponding expression levels. Genes with null (zero) expression values were preserved.
+4. **Model Initialization:** The resulting matrix was processed using the `xomicsToModel` function. The scripts responsible for this data processing are `creator.py` and `utils.py`.
+5. **Bibliomic Data:** Simultaneously, an Excel file named `Bibliomics_Data` was curated. It contains a list of genes associated with breast cancer, the mandatory inclusion of a biomass reaction, and specific constraints required to generate consistent personalized models.
+
+#### Model Construction
+- **Script:** A MATLAB script named `Construction_Gems` was used. The `xomicsToModel` tool utilizes the gene expression and bibliomics data to find all possible reactions given the selected genes, ensuring the models are thermodynamically consistent (Reference: Preciat).
+- **Data directory:** `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids/GEMs_Data_for_construction`
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/GEMS_Code_for_Construction/GEMs_construction`
+
+### 2. Obtaining Metabolic Fluxes
+
+Once the models were built, various general and secondary metabolic fluxes were calculated. These fluxes act as descriptors that reflect the heterogeneity across the different metabolic models.
+
+- **Data directory:** `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids/GEMs_Data_for_construction`
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Metabolic_fluxes_calculation_MATLAB`
+- **Main Script:** `Fluxes_calculation.m` runs the principal flux optimizations.
+- **Pareto Optimization Script:** `Pareto_multiobjective_1226_models.m` calculates multi-objective optimality in the metabolic models. This Pareto procedure follows the same methodology described in: 
+  > Dai, Z., Yang, S., Xu, L., et al. (2019). Identification of cancer-associated metabolic vulnerabilities by modeling multi-objective optimality in metabolism. *Cell Communication and Signaling*, 17, 124. [https://doi.org/10.1186/s12964-019-0439-y](https://doi.org/10.1186/s12964-019-0439-y)
+- **Model Names Extraction:** `Models_names_saved.m` is a utility script that exclusively extracts and saves the names of the generated models.
+- **Auxiliary functions:** `PrepareModel.m` and `countcarbons.m` ensure that the biomass reaction is correctly present in the model before running the flux optimizations.
+
+### 3. Supervised Learning Pipeline
+
+A pipeline was designed for processing metabolic data and incorporating it into supervised learning models to predict whether samples are tumor or normal tissue.
+
+- **Directory:** `main_notebook/`
+- **Dependencies:** Python algorithms require exact library versions to function correctly. Please install them using the `requirements.txt` file located in the root of the repository.
+
+### 4. Unsupervised Learning and Clinical/Metabolic Correlations
+
+We searched for correlations between clinical and metabolic data using unsupervised learning models and statistical metrics.
+
+#### Clinical Data Analysis
+Clinical data was processed by performing a refined selection of variables across different datasets. Two dimensionality reduction methods (PCA and UMAP) and various unsupervised learning models were applied.
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Clinical_data_analysis/ML_models_using_clinical_data`
+- This folder contains `.py` scripts for PCA and UMAP that run the models using the refined variable selection.
+- **Results:** The outputs are saved in the corresponding `results/` folders.
+
+#### Metabolic Data Analysis
+The exact same dimensionality reduction and unsupervised learning procedures were applied to the metabolic data.
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Metabolic/ML_models_using_metabolic_data`
+
+#### Cluster Comparisons & Concordance
+Once clusters were generated from both clinical and metabolic data, the algorithms were compared using the Adjusted Rand Index (ARI).
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Cluster_correlations`
+- **Script:** `correlations_main.py` is responsible for finding the pair of clinical and metabolic algorithms with the highest number of concordant patients. This identified the divergent group with a characteristic quiescent signature.
+- **Generated Results:**
+  - `results/divergent_patients_study_pyn.csv`: Contains the patient codes and their divergent classification.
+  - `results/core_patients_correlation_ParetoAndNorms`: Contains the patients belonging to the "core" group.
+  - Additional outputs include figures of the selected clusters, a heatmap of the algorithms that grouped similarly, and a correlation matrix of the groups.
+
+#### Statistical Analysis
+Finally, significant differences and effect sizes between groups were analyzed.
+- **Metrics:** Mann-Whitney U test, Cliff's Delta, and Benjamini-Hochberg correction.
+- **Script:** `Clustering_Correlation_Analysis.ipynb` (written in R due to its superior capabilities for statistical graphics and biological analysis).
+- **Results:** All generated figures and plots from this analysis are stored in the `Figures_PLOS_v6` folder.
 
 ---
 
