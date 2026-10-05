@@ -115,7 +115,9 @@ The exact same dimensionality reduction and unsupervised learning procedures wer
   - `resultados_TumorPhenotype_UMAP_metrics_actualizado_sinl2/`: UMAP clustering metrics and assignments, also excluding the L2 norm (sinl2). In addition to the files mentioned above (adapted for UMAP), this folder includes:
     - `Estadisticas_Metabolicas_Clusters.csv` & `Resumen_Significancia_PorGrupo.csv`: Detailed statistical analyses and significance summaries between the formed clusters.
     - `Reporte_UMAP_*.pdf`: An automated, comprehensive PDF report containing the top clustering metrics and distributions.
-
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Metabolic_data_analysis/ML_models_using_metabolic_data/Pareto_Exploratory_Analysis`
+    - Data_analysis_pareto.ipynb Analyzes Pareto solutions of all patients, including Divergent an Core patients. 
+    
 #### Cluster Comparisons & Concordance
 Once clusters were generated from both clinical and metabolic data, the algorithms were compared using the Adjusted Rand Index (ARI).
 - **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Cluster_correlations`
