@@ -16,7 +16,7 @@ initCobraToolbox(false);
 changeCobraSolver('gurobi', 'all');
 
 % ── Resolve paths relative to this script's location ────────────────────────
-% Hierarchy: GEMS_Exploratory_Analysis/ -> GEMS_Code_for_Construction/ -> src/ -> Unsupervised_learning_scripts_and_data/
+% Hierarchy: GEMS_Exploratory_Analysis/ -> GEMS_Code_for_Construction/ -> src/ -> old/
 scriptDir    = fileparts(mfilename('fullpath'));
 dataRoot     = fullfile(scriptDir, '..', '..', '..', 'Clinical_data_and_models_ids');
 modelsFolder = fullfile(dataRoot, 'All_models_created');

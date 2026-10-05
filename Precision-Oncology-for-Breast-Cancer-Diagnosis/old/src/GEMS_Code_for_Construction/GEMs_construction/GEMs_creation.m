@@ -23,7 +23,7 @@ changeCobraSolver('gurobi', 'all');
 %% 
 
 % ── Resolve paths relative to this script's location ────────────────────────
-% Hierarchy: GEMs_construction/ -> GEMS_Code_for_Construction/ -> src/ -> Unsupervised_learning_scripts_and_data/
+% Hierarchy: GEMs_construction/ -> GEMS_Code_for_Construction/ -> src/ -> old/
 scriptDir    = fileparts(mfilename('fullpath'));
 dataRoot     = fullfile(scriptDir, '..', '..', '..', 'Clinical_data_and_models_ids');
 

@@ -130,7 +130,7 @@ print(f'Cluster colors: Core={PALETTE["core"]} | Divergent={PALETTE["divergent"]
 ID_COLUMN = 'ModelName'
 MIN_VALID_SAMPLES = 50
 
-# Root data directory (3 levels up from this script → Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids/)
+# Root data directory (3 levels up from this script → old/Clinical_data_and_models_ids/)
 _SCRIPT_DIR = Path(__file__).resolve().parent
 DATA_DIR = _SCRIPT_DIR.parents[2] / "Clinical_data_and_models_ids"
 

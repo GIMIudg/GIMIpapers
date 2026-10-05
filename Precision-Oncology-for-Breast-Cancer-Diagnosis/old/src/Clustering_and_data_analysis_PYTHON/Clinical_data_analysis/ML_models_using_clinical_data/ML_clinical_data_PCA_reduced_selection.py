@@ -1,10 +1,9 @@
 # ============================================================
-# 🚀 Pipeline: Clinical & Demographic Clustering (UMAP Manifold Analysis)
+# 🚀 Pipeline: Clinical & Demographic Clustering (PCA Manifold Analysis)
 # Source Data: TCGA-BRCA Clinical, Survival, and Molecular Metadata
-# Method: Multi-Configuration UMAP Manifold Learning & Benchmark Clustering Suite
+# Method: Deterministic Multi-Configuration PCA & Benchmark Clustering Suite
 # Quality Metrics: Silhouette, Davies-Bouldin, and Calinski-Harabasz Scores
 # Integration: Master Multi-Omics Harmonization & Multi-Tier ID Merging
-# Reproducibility Target: Seed-tracked stochastic manifolds & cluster engines
 # ============================================================
 
 import os
@@ -15,9 +14,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from mpl_toolkits.mplot3d import Axes3D
+from pathlib import Path
 
 import sklearn
 from sklearn.model_selection import ParameterGrid
+from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, OneHotEncoder, LabelEncoder
 from sklearn.compose import ColumnTransformer
 from sklearn.cluster import (
@@ -31,16 +32,6 @@ from sklearn.metrics import (
 from sklearn.impute import SimpleImputer
 
 warnings.filterwarnings("ignore")
-
-# Verify UMAP installation
-try:
-    import umap
-    UMAP_AVAILABLE = True
-except ImportError:
-    raise ImportError(
-        "❌ UMAP is not installed in this environment. Run:\n"
-        "   pip install umap-learn"
-    )
 
 # Conditional import for optional HDBSCAN package
 try:
@@ -57,22 +48,22 @@ except ImportError:
 # Resolve data root relative to this script's location
 # Path hierarchy: ML_models_using_clinical_data -> Clinical_data_analysis ->
 #                 Clustering_and_data_analysis_PYTHON -> src ->
-#                 Unsupervised_learning_scripts_and_data
-from pathlib import Path as _Path
-_SCRIPT_DIR = _Path(__file__).resolve().parent
+#                 old
+_SCRIPT_DIR = Path(__file__).resolve().parent
 _DATA_ROOT  = _SCRIPT_DIR.parents[3] / 'Clinical_data_and_models_ids'
 
-PATH_BASE   = str(_DATA_ROOT / 'Clinical_Data') + os.sep
-PATH_MODELS = str(_DATA_ROOT / 'GEMs_Data_for_construction') + os.sep
+# Input data paths — all resolved from Clinical_data_and_models_ids/
+PATH_BASE    = str(_DATA_ROOT / 'Clinical_Data') + os.sep
+PATH_MODELS  = str(_DATA_ROOT / 'GEMs_Data_for_construction') + os.sep
 
 COL_SAMPLE_ID   = 'sample'
 COL_SAMPLE_TYPE = 'sample_type.samples'
-OUTPUT_DIR      = "Results_clustering_UMAP_reduced_selection"
+OUTPUT_DIR      = "Results_clustering_PCA_reduced_selection"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
-# Random seeds tested across stochastic clustering and UMAP manifolds
+# Random seeds tested across all stochastic clustering algorithms
 SEEDS_TO_TEST = [42, 123, 100]
-RANDOM_SEED = SEEDS_TO_TEST[0]
+RANDOM_SEED   = SEEDS_TO_TEST[0]
 np.random.seed(RANDOM_SEED)
 
 # ============================================================
@@ -101,7 +92,6 @@ df_survival     = load_data("TCGA-BRCA.survival.tsv.gz")
 df_metadata_raw = load_data("MetaData.xlsx")
 df_model_names  = load_data("Model's_ids.txt", base=PATH_MODELS)
 
-# Validate core data structures
 for name, df_check in [("Clinical", df_clinical), ("Survival", df_survival), ("Model names", df_model_names)]:
     if df_check.empty:
         raise ValueError(f"❌ Essential dataset '{name}' could not be loaded. Verify file path.")
@@ -111,17 +101,17 @@ print(f"Datasets loaded: Clinical ({len(df_clinical)}), Survival ({len(df_surviv
 
 def extract_sample_id(filename: str) -> str:
     """Standardizes TCGA barcodes to 16-character sample identifiers (TCGA-XX-XXXX-XX)."""
-    match = re.search(r'(TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{2}[A-Z0-9]?)', str(filename))
+    match = re.search(r'(TCGA-[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{2}[A-Z0-9]?)', filename)
     if match:
         return match.group(0)[:16]
-    return str(filename).split('_')[0].strip()[:16]
+    return filename.split('_')[0].strip()[:16]
 
 
 # Build index cohort based on model identifiers
 unique_model_list = df_model_names.iloc[:, 0].dropna().astype(str).tolist()
-model_sample_ids  = [extract_sample_id(model) for model in unique_model_list]
+model_sample_ids  = [extract_sample_id(m) for m in unique_model_list]
 df_models_base    = pd.DataFrame({
-    COL_SAMPLE_ID:     model_sample_ids,
+    COL_SAMPLE_ID:         model_sample_ids,
     'model_full_path': unique_model_list,
 })
 
@@ -130,8 +120,9 @@ df_models_base    = pd.DataFrame({
 # ============================================================
 
 metadata_cols_to_keep = [
-    'Menopausal Status', 'Cancer Type', 'ER', 'PR', 'HER2', 'Subtype',
-    'Genetic Ancestry', 'Survival Status', 'Survival Time (years)', 'Sex'
+    'Menopausal Status', 'Cancer Type', 'ER', 'PR', 'HER2',
+    'Subtype', 'Genetic Ancestry', 'Survival Status',
+    'Survival Time (years)', 'Sex'
 ]
 
 if not df_metadata_raw.empty and 'hidden' in df_metadata_raw.columns:
@@ -146,7 +137,7 @@ if not df_metadata_raw.empty and 'hidden' in df_metadata_raw.columns:
     available_meta_cols = [c for c in metadata_cols_to_keep if c in df_metadata_clean.columns]
     df_metadata_clean = df_metadata_clean[[COL_SAMPLE_ID] + available_meta_cols].copy()
 
-    # Create 12-character patient identifier for fallback resolution
+    # Create 12-character patient identifier for fallback imputation
     df_metadata_clean['patient_id'] = df_metadata_clean[COL_SAMPLE_ID].str.slice(0, 12)
 
     # Reference table indexed strictly by Patient ID
@@ -195,7 +186,7 @@ if not df_metadata_clean.empty:
 # MERGE LEVEL 2: Patient ID (12-character) fallback for missing clinical variables
 if not df_metadata_by_patient.empty:
     df_final['patient_id'] = df_final[COL_SAMPLE_ID].str.slice(0, 12)
-    missing_mask = df_final[available_meta_cols].isna().any(axis=1)
+    missing_mask     = df_final[available_meta_cols].isna().any(axis=1)
     n_missing_before = missing_mask.sum()
 
     df_fill = pd.merge(
@@ -209,7 +200,7 @@ if not df_metadata_by_patient.empty:
         if col in df_fill.columns:
             df_final.loc[missing_mask, col] = df_final.loc[missing_mask, col].fillna(df_fill[col])
 
-    df_final = df_final.drop(columns=['patient_id'])
+    df_final      = df_final.drop(columns=['patient_id'])
     n_missing_after = df_final[available_meta_cols].isna().any(axis=1).sum()
 
     print("\n🔁 Patient-Level Metadata Fallback Resolution:")
@@ -226,18 +217,6 @@ if not df_metadata_by_patient.empty:
 df_filtered = df_final.copy()
 
 # ============================================================
-# 3.2 DATA TYPE CONVERSIONS & NORMALIZATION
-# ============================================================
-for c in ['is_ffpe.samples', 'oct_embedded.samples']:
-    if c in df_filtered.columns:
-        df_filtered[c] = df_filtered[c].replace({True: 1, False: 0})
-
-for c in ['age_at_diagnosis.diagnoses', 'days_to_birth.demographic']:
-    if c in df_filtered.columns and df_filtered[c].notna().any():
-        if (df_filtered[c].dropna() > 1000).any():
-            df_filtered[c] = df_filtered[c] / 365.25
-
-# ============================================================
 # 4. CLINICAL DESCRIPTOR SELECTION & FEATURE ENGINEERING
 # ============================================================
 initial_descriptors = [
@@ -252,19 +231,17 @@ initial_descriptors = [
     'prior_treatment.diagnoses',
     'sample_type.samples',
     'tissue_type.samples',
-    'ethnicity.demographic',
     'age_at_diagnosis.diagnoses',
 ]
 
 high_res_descriptors = [
-    'Menopausal Status', 'Cancer Type', 'ER', 'PR', 'HER2', 'Subtype',
-    'Genetic Ancestry', 'Race', 'Sex'
+    'Menopausal Status', 'Cancer Type', 'ER', 'PR', 'HER2', 'Subtype'
 ]
 
 final_descriptors = initial_descriptors + high_res_descriptors
 final_cols = [c for c in final_descriptors if c in df_filtered.columns]
 
-if len(final_cols) == 0:
+if not final_cols:
     cols_to_exclude = ['submitter_id', 'sample', 'model_full_path']
     final_cols = [col for col in df_filtered.columns if col not in cols_to_exclude]
 
@@ -286,7 +263,7 @@ def prior_treatment_flag(r: pd.Series) -> int:
 
 df_aug['Prior_Treatment_Flag'] = df_aug.apply(prior_treatment_flag, axis=1)
 
-# Binary flag: Metastatic dissemination or high nodal stage
+# Binary flag: Metastatic dissemination or advanced nodal burden
 if all(c in df_aug.columns for c in ['ajcc_pathologic_m.diagnoses', 'ajcc_pathologic_n.diagnoses']):
     df_aug['Metastasis_Flag'] = df_aug.apply(
         lambda r: 1 if ('m1' in str(r['ajcc_pathologic_m.diagnoses']).lower() or
@@ -338,30 +315,26 @@ for col in label_cols_candidates:
         label_encoders[col] = le
 
 id_and_meta_cols = set(id_cols_to_keep + ['submitter_id', 'sample', 'model_full_path'])
-
 numeric_cols = [
     c for c in df_aug.select_dtypes(include=['int64', 'float64', 'float32', 'int32', 'uint8']).columns
     if c not in id_and_meta_cols
 ]
-
-# Exclude original categorical columns already mapped to _encoded variants
 label_orig_cols = [
     col for col in label_cols_candidates
     if col in df_aug.columns and f"{col}_encoded" in df_aug.columns
 ]
-
 categorical_cols = [
     c for c in df_aug.select_dtypes(include=['object', 'category']).columns
     if c not in id_and_meta_cols and c not in label_orig_cols
 ]
 
-# Impute missing numeric variables with constant zero
+# Impute numeric descriptors with zero
 cols_to_impute_zero = [c for c in numeric_cols if df_aug[c].isna().any()]
 if cols_to_impute_zero:
     imputer_num = SimpleImputer(strategy='constant', fill_value=0)
     df_aug.loc[:, cols_to_impute_zero] = imputer_num.fit_transform(df_aug.loc[:, cols_to_impute_zero])
 
-# Impute missing categorical descriptors
+# Fill missing categorical descriptors with explicit string
 for col in categorical_cols:
     df_aug[col] = df_aug[col].fillna('Missing').astype(str)
 
@@ -385,8 +358,7 @@ final_columns = []
 if 'num' in preprocessor.named_transformers_:
     final_columns.extend(numeric_cols)
 if 'cat' in preprocessor.named_transformers_ and preprocessor.named_transformers_['cat'] is not None:
-    cat_feature_names = preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols)
-    final_columns.extend(cat_feature_names)
+    final_columns.extend(preprocessor.named_transformers_['cat'].get_feature_names_out(categorical_cols))
 
 final_columns = np.array(final_columns)
 print(f"✅ Preprocessing pipeline complete: {len(final_columns)} features encoded for ML.")
@@ -421,7 +393,6 @@ alg_classes = {
     'AffinityPropagation': AffinityPropagation,
     'BayesianGaussianMixture': BayesianGaussianMixture,
 }
-
 if HDBSCAN_AVAILABLE:
     alg_classes['HDBSCAN'] = hdbscan.HDBSCAN
 
@@ -440,22 +411,19 @@ def clustering_evaluation_table(X: np.ndarray, algorithms: dict, param_grids: di
 
     for alg_name, alg_class in algorithms.items():
         best_score = -1
-        best_params = None
-        best_labels = None
-        best_n_clusters = 0
-        best_noise_pct = 0
-        best_seed = None
+        best_params = best_labels = best_seed = None
+        best_n_clusters = best_noise_pct = 0
 
         current_grid_dict = param_grids.get(alg_name, [{}])
-        if isinstance(current_grid_dict, dict) and any(isinstance(v, list) for v in current_grid_dict.values()):
-            param_grid = ParameterGrid(current_grid_dict)
-        else:
-            param_grid = ParameterGrid([current_grid_dict])
+        param_grid = (
+            ParameterGrid(current_grid_dict)
+            if isinstance(current_grid_dict, dict)
+            else ParameterGrid([current_grid_dict])
+        )
 
         for current_seed in seeds_list:
             if alg_name not in ['GMM', 'KMeans', 'BayesianGaussianMixture', 'Birch'] and current_seed != seeds_list[0]:
                 continue
-
             for param_val in param_grid:
                 try:
                     if alg_name in ['GMM', 'KMeans', 'BayesianGaussianMixture', 'Birch']:
@@ -471,55 +439,42 @@ def clustering_evaluation_table(X: np.ndarray, algorithms: dict, param_grids: di
 
                     valid_mask = labels != -1
                     n_clusters = len(set(labels[valid_mask]))
-                    noise_pct = (labels == -1).sum() / len(labels) * 100 if -1 in labels else 0.0
+                    noise_pct  = (labels == -1).sum() / len(labels) * 100 if -1 in labels else 0.0
 
                     if noise_pct > MAX_NOISE_PCT:
                         continue
 
-                    if n_clusters > 1 and valid_mask.sum() > 1:
-                        score = silhouette_score(X[valid_mask], labels[valid_mask])
-                    else:
-                        score = -1
+                    score = (
+                        silhouette_score(X[valid_mask], labels[valid_mask])
+                        if n_clusters > 1 and valid_mask.sum() > 1
+                        else -1
+                    )
 
                     if score > best_score:
-                        best_score = score
-                        best_params = param_val
-                        best_labels = labels
-                        best_n_clusters = n_clusters
-                        best_noise_pct = noise_pct
-                        best_seed = current_seed
+                        best_score, best_params, best_labels = score, param_val, labels
+                        best_n_clusters, best_noise_pct, best_seed = n_clusters, noise_pct, current_seed
 
                 except Exception:
                     continue
 
         if best_labels is not None:
             try:
-                if best_n_clusters > 1 and np.sum(best_labels != -1) > 1:
-                    mask = best_labels != -1
-                    db_score = davies_bouldin_score(X[mask], best_labels[mask])
-                    ch_score = calinski_harabasz_score(X[mask], best_labels[mask])
-                else:
-                    db_score = np.nan
-                    ch_score = np.nan
+                mask     = best_labels != -1
+                db_score = davies_bouldin_score(X[mask], best_labels[mask]) if best_n_clusters > 1 else np.nan
+                ch_score = calinski_harabasz_score(X[mask], best_labels[mask]) if best_n_clusters > 1 else np.nan
             except Exception:
-                db_score = np.nan
-                ch_score = np.nan
+                db_score = ch_score = np.nan
 
             results[alg_name] = {
                 "best_score": best_score, "best_params": best_params, "best_labels": best_labels,
-                "n_clusters": best_n_clusters, "noise_pct": best_noise_pct, "best_seed": best_seed,
-                "db_score": db_score, "ch_score": ch_score
+                "n_clusters": best_n_clusters, "noise_pct": best_noise_pct,
+                "best_seed": best_seed, "db_score": db_score, "ch_score": ch_score
             }
-
             summary_rows.append({
-                "Algorithm": alg_name,
-                "Silhouette Score": best_score,
-                "Davies-Bouldin Score": db_score,
-                "Calinski-Harabasz Score": ch_score,
-                "Best Params": best_params,
-                "Clusters": best_n_clusters,
-                "Noise %": best_noise_pct,
-                "Best Seed": best_seed,
+                "Algorithm": alg_name, "Silhouette Score": best_score,
+                "Davies-Bouldin Score": db_score, "Calinski-Harabasz Score": ch_score,
+                "Best Params": best_params, "Clusters": best_n_clusters,
+                "Noise %": best_noise_pct, "Best Seed": best_seed,
                 "Unique Labels": np.unique(best_labels)
             })
 
@@ -530,45 +485,41 @@ def clustering_evaluation_table(X: np.ndarray, algorithms: dict, param_grids: di
 
 
 # ============================================================
-# 7. GENERATE MULTI-CONFIGURATION UMAP EMBEDDINGS
+# 7. GENERATE MULTI-CONFIGURATION PCA EMBEDDINGS
 # ============================================================
 X_input = X_scaled
+n_samples, n_features = X_input.shape
+max_components = min(n_samples, n_features)
 
-n_components_list = [2, 3]
-n_neighbors_list  = [10, 30, 50]
-min_dist_list     = [0.05, 0.3]
-metric_list       = ['euclidean', 'manhattan', 'cosine']
+PCA_N_COMPONENTS_LIST = [2, 3, 5, 10, 15, 20, 50]
+PCA_N_COMPONENTS_LIST = [c for c in PCA_N_COMPONENTS_LIST if c <= max_components]
+PCA_WHITEN_LIST       = [False, True]
+total_emb = len(PCA_N_COMPONENTS_LIST) * len(PCA_WHITEN_LIST)
 
-umap_param_grid = [
-    {'n_components': nc, 'n_neighbors': nn, 'min_dist': md, 'metric': mt}
-    for nc in n_components_list
-    for nn in n_neighbors_list
-    for md in min_dist_list
-    for mt in metric_list
-]
-
-print(f"\n🔸 Computing UMAP embeddings on X_scaled ({X_scaled.shape[1]} features) with {len(umap_param_grid)} configs across {len(SEEDS_TO_TEST)} seeds...")
+print("\n🔸 Computing PCA latent space projections:")
+print(f"    Input features  : {n_features} clinical/demographic metrics")
+print(f"    Samples         : {n_samples}")
+print(f"    Max components  : {max_components}")
+print(f"    Total setups    : {len(PCA_N_COMPONENTS_LIST)} components × {len(PCA_WHITEN_LIST)} whiten = {total_emb} embeddings")
 
 embedding_matrices = {}
 
-for current_seed in SEEDS_TO_TEST:
-    np.random.seed(current_seed)
-    for params in umap_param_grid:
-        emb_name = (
-            f"UMAP_C{params['n_components']}_NN{params['n_neighbors']}"
-            f"_MD{params['min_dist']}_M{params['metric']}_S{current_seed}"
-        )
+for n_comp in PCA_N_COMPONENTS_LIST:
+    for whiten in PCA_WHITEN_LIST:
+        emb_name = f"PCA_C{n_comp}_W{int(whiten)}"
         try:
-            umap_model = umap.UMAP(**params, random_state=current_seed)
-            embedding_matrices[emb_name] = umap_model.fit_transform(X_input)
+            pca_model = PCA(n_components=n_comp, whiten=whiten, random_state=RANDOM_SEED)
+            embedding_matrices[emb_name] = pca_model.fit_transform(X_input)
+            var_exp = pca_model.explained_variance_ratio_.cumsum()[-1]
+            print(f"    ✅ {emb_name} → Cumulative Explained Variance: {var_exp:.3f}")
         except Exception as e:
-            print(f"Error computing UMAP {emb_name}: {e}")
+            print(f"    ❌ Error computing {emb_name}: {e}")
             continue
 
-print(f"\n✅ {len(embedding_matrices)} UMAP embeddings successfully generated.")
+print(f"\n✅ {len(embedding_matrices)} PCA embeddings successfully generated.")
 
 # ============================================================
-# 8. PIPELINE EXECUTION: CLUSTERING ACROSS UMAP EMBEDDINGS
+# 8. EXECUTION: CLUSTERING ACROSS PCA EMBEDDINGS
 # ============================================================
 
 df_ids = (
@@ -577,7 +528,7 @@ df_ids = (
     else df_aug[[id_cols_to_keep[0]]].copy().rename(columns={id_cols_to_keep[0]: 'ModelName'})
 )
 
-df_clusters_master = df_ids.copy()
+df_clusters_master   = df_ids.copy()
 all_clustering_results = []
 
 for emb_name_base, X_emb in embedding_matrices.items():
@@ -598,17 +549,12 @@ for emb_name_base, X_emb in embedding_matrices.items():
         full_name     = f"{row['Algorithm']}_{emb_name_base}_K{row['Clusters']}_{score_str}{seed_str}"
 
         all_clustering_results.append({
-            'Configuration': full_name,
-            'Algorithm': row['Algorithm'],
-            'Embedding': emb_name_base,
-            'Silhouette Score': row['Silhouette Score'],
-            'Davies-Bouldin Score': db_val,
-            'Calinski-Harabasz Score': ch_val,
-            'Clusters': row['Clusters'],
-            'Noise_Pct': noise_pct_val,
+            'Configuration': full_name, 'Algorithm': row['Algorithm'],
+            'Embedding': emb_name_base, 'Silhouette Score': row['Silhouette Score'],
+            'Davies-Bouldin Score': db_val, 'Calinski-Harabasz Score': ch_val,
+            'Clusters': row['Clusters'], 'Noise_Pct': noise_pct_val,
             'Labels': results[row['Algorithm']]['best_labels'],
-            'Embedding_Key': emb_name_base,
-            'Best Seed': row['Best Seed']
+            'Embedding_Key': emb_name_base, 'Best Seed': row['Best Seed']
         })
 
         if row['Silhouette Score'] > 0:
@@ -635,14 +581,12 @@ df_selected_models = (
     .reset_index(drop=True)
 )
 
-num_selected_models = len(df_selected_models)
-print(f"\n✨ Identified {num_selected_models} clustering partitions with Silhouette >= {SILHOUETTE_THRESHOLD:.1f}.")
+print(f"\n✨ Identified {len(df_selected_models)} clustering partitions with Silhouette >= {SILHOUETTE_THRESHOLD:.1f}.")
 
 if not df_selected_models.empty:
     df_selected_labels = df_ids.copy()
     for index, row in df_selected_models.iterrows():
-        config_name = row['Configuration']
-        labels = row['Labels']
+        config_name, labels = row['Configuration'], row['Labels']
         if len(labels) == df_ids.shape[0]:
             df_selected_labels[config_name] = labels
         else:
@@ -650,7 +594,7 @@ if not df_selected_models.empty:
 
     output_filename_selected = os.path.join(OUTPUT_DIR, "patients_clustered_selected_no_filter.csv")
     df_selected_labels.to_csv(output_filename_selected, index=False)
-    print(f"\n💾 Filtered cluster assignments ({num_selected_models} models) saved to: {output_filename_selected}")
+    print(f"\n💾 Filtered cluster assignments ({len(df_selected_models)} models) saved to: {output_filename_selected}")
 else:
     print(f"\n⚠️  No clustering solutions satisfied the Silhouette threshold >= {SILHOUETTE_THRESHOLD:.1f}.")
 
@@ -660,12 +604,17 @@ else:
 
 df_top_to_plot = df_selected_models.head(5).copy()
 
-def generate_umap_plots(df_top_models: pd.DataFrame, embedding_matrices: dict, output_dir: str):
-    """Generates 2D or 3D scatter plots for the top N ranking clustering models on UMAP projections."""
+def generate_pca_plots(df_top_models: pd.DataFrame, embedding_matrices: dict, output_dir: str):
+    """
+    Renders projection plots for the top clustering configurations:
+      - 2 components: 2D Scatter Plot
+      - 3 components: 3D Projection
+      - >3 components: Pairwise scatter grid of the first 3 Principal Components
+    """
     if df_top_models.empty:
         return
 
-    print(f"\n📈 Rendering UMAP cluster visualizations for top {len(df_top_models)} models...")
+    print(f"\n📈 Rendering PCA cluster visualizations for top {len(df_top_models)} models...")
 
     for i, row in df_top_models.reset_index(drop=True).iterrows():
         emb_key     = row['Embedding']
@@ -673,11 +622,11 @@ def generate_umap_plots(df_top_models: pd.DataFrame, embedding_matrices: dict, o
         config_name = row['Configuration']
 
         if emb_key not in embedding_matrices:
-            print(f"Error: Embedding matrix '{emb_key}' missing from dictionary.")
+            print(f"    ❌ Embedding matrix '{emb_key}' missing from dictionary. Skipping.")
             continue
 
-        X_umap = embedding_matrices[emb_key]
-        n_dims = X_umap.shape[1]
+        X_pca  = embedding_matrices[emb_key]
+        n_dims = X_pca.shape[1]
 
         title = (
             f"TOP {i+1}: {config_name}\n"
@@ -685,16 +634,19 @@ def generate_umap_plots(df_top_models: pd.DataFrame, embedding_matrices: dict, o
             f"Noise: {row['Noise_Pct']:.1f}%"
         )
 
-        safe_config_name = re.sub(r'[\\/*?:"<>|]', '_', config_name)
-        filename = os.path.join(output_dir, f"TOP_{i+1}_{safe_config_name}.png")
+        safe_name = re.sub(r'[\\/*?"<>|]', '_', config_name)
+        filename  = os.path.join(output_dir, f"TOP_{i+1}_{safe_name}.png")
 
-        df_plot = pd.DataFrame(X_umap, columns=[f'Dim{j+1}' for j in range(n_dims)])
+        df_plot = pd.DataFrame(
+            X_pca[:, :min(n_dims, 3)],
+            columns=[f'PC{j+1}' for j in range(min(n_dims, 3))]
+        )
         df_plot['Cluster'] = labels.astype(str)
 
         cluster_list = sorted(df_plot['Cluster'].unique())
-        cluster_labels_for_palette = [c for c in cluster_list if c != '-1']
-        palette = sns.color_palette("tab10", n_colors=max(len(cluster_labels_for_palette), 1))
-        color_map = {c: palette[j] for j, c in enumerate(cluster_labels_for_palette)}
+        non_noise    = [c for c in cluster_list if c != '-1']
+        palette      = sns.color_palette("tab10", n_colors=max(len(non_noise), 1))
+        color_map    = {c: palette[j] for j, c in enumerate(non_noise)}
         if '-1' in cluster_list:
             color_map['-1'] = 'gray'
 
@@ -702,9 +654,11 @@ def generate_umap_plots(df_top_models: pd.DataFrame, embedding_matrices: dict, o
         if n_dims == 2:
             plt.figure(figsize=(10, 8))
             sns.scatterplot(
-                x='Dim1', y='Dim2', hue='Cluster', data=df_plot,
+                x='PC1', y='PC2', hue='Cluster', data=df_plot,
                 palette=color_map, legend="full", alpha=0.7, s=50
             )
+            plt.xlabel('PC1')
+            plt.ylabel('PC2')
             plt.title(title, fontsize=12)
             plt.savefig(filename, bbox_inches='tight')
             plt.close()
@@ -713,32 +667,51 @@ def generate_umap_plots(df_top_models: pd.DataFrame, embedding_matrices: dict, o
         # 3D Projection
         elif n_dims == 3:
             fig = plt.figure(figsize=(12, 10))
-            ax = fig.add_subplot(111, projection='3d')
-            for cluster_label in cluster_list:
-                df_subset = df_plot[df_plot['Cluster'] == cluster_label]
+            ax  = fig.add_subplot(111, projection='3d')
+            for cl in cluster_list:
+                sub = df_plot[df_plot['Cluster'] == cl]
                 ax.scatter(
-                    df_subset['Dim1'], df_subset['Dim2'], df_subset['Dim3'],
-                    label=f'Cluster {cluster_label}',
-                    color=color_map.get(cluster_label, 'black'), alpha=0.7, s=50
+                    sub['PC1'], sub['PC2'], sub['PC3'],
+                    label=f'Cluster {cl}',
+                    color=color_map.get(cl, 'black'), alpha=0.7, s=50
                 )
             ax.set_title(title, fontsize=12)
-            ax.set_xlabel('Dim1')
-            ax.set_ylabel('Dim2')
-            ax.set_zlabel('Dim3')
+            ax.set_xlabel('PC1')
+            ax.set_ylabel('PC2')
+            ax.set_zlabel('PC3')
             ax.legend(title='Cluster', bbox_to_anchor=(1.05, 1), loc='upper left')
             plt.savefig(filename, bbox_inches='tight')
             plt.close()
             print(f"    > 3D visualization saved: {filename}")
 
+        # Pairwise PC1-PC3 grid for higher-dimensional spaces
         else:
-            print(f"    > Skipping plot generation for {emb_key} (Dimension {n_dims} > 3).")
+            fig, axes = plt.subplots(1, 3, figsize=(18, 6))
+            pairs = [('PC1', 'PC2'), ('PC1', 'PC3'), ('PC2', 'PC3')]
+            for ax, (px, py) in zip(axes, pairs):
+                for cl in cluster_list:
+                    sub = df_plot[df_plot['Cluster'] == cl]
+                    ax.scatter(
+                        sub[px], sub[py],
+                        label=f'Cluster {cl}',
+                        color=color_map.get(cl, 'black'), alpha=0.7, s=30
+                    )
+                ax.set_xlabel(px)
+                ax.set_ylabel(py)
+                ax.set_title(f'{px} vs {py}')
+            axes[-1].legend(title='Cluster', bbox_to_anchor=(1.05, 1), loc='upper left')
+            fig.suptitle(title, fontsize=11)
+            plt.tight_layout()
+            plt.savefig(filename, bbox_inches='tight')
+            plt.close()
+            print(f"    > Pairwise PC1-3 projection saved: {filename}")
 
 
-generate_umap_plots(df_top_to_plot, embedding_matrices, OUTPUT_DIR)
+generate_pca_plots(df_top_to_plot, embedding_matrices, OUTPUT_DIR)
 
-# ========================================================================
+# ============================================================
 # 11. UNIFIED CLINICAL & CLUSTERING MASTER DATASET EXPORT
-# ========================================================================
+# ============================================================
 
 print("\n🔗 Compiling harmonized master dataset...")
 
@@ -807,9 +780,9 @@ missing_cols = []
 for col in PRIORITY_COLS:
     candidates = [c for c in df_final_unified.columns if col.lower() in c.lower()]
     if col in df_final_unified.columns:
-        n_na   = df_final_unified[col].isna().sum()
-        n_tot  = len(df_final_unified)
-        pct    = n_na / n_tot * 100
+        n_na  = df_final_unified[col].isna().sum()
+        n_tot = len(df_final_unified)
+        pct   = n_na / n_tot * 100
         status = f"✅ {col:<35} → {n_tot - n_na}/{n_tot} populated ({100 - pct:.1f}% complete)"
         found_cols.append(col)
         print(status)
@@ -833,4 +806,4 @@ print(f"\n✅ Master dataset exported: {output_master_unified}")
 print(f"📊 Matrix dimensions: {df_final_unified.shape[0]} samples × {df_final_unified.shape[1]} columns")
 print(f"\nFirst 10 columns : {df_final_unified.columns[:10].tolist()} ...")
 print(f"Last 10 columns  : {df_final_unified.columns[-10:].tolist()} ...")
-print("\n🎉 Clinical UMAP clustering pipeline executed successfully!")
+print("\n🎉 Clinical clustering pipeline executed successfully!")

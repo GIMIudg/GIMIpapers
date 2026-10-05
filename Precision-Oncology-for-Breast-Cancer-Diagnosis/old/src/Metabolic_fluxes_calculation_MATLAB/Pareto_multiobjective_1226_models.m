@@ -30,7 +30,7 @@ global SA_ALL_NAMES;
 %% 2. FILE PATHS, RUNTIME PARAMETERS & TARGET REACTIONS
 %% =========================================================================
 % Resolve paths relative to this script's location
-% Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> Unsupervised_learning_scripts_and_data/
+% Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> old/
 scriptDir    = fileparts(mfilename('fullpath'));
 dataRoot     = fullfile(scriptDir, '..', '..', 'Clinical_data_and_models_ids');
 modelsFolder = fullfile(dataRoot, 'All_models_created');

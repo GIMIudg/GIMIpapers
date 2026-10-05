@@ -5,7 +5,7 @@ import mygene
 import os
 
 # Resolve data root relative to this script's location
-# Hierarchy: GEMs_construction/ -> GEMS_Code_for_Construction/ -> src/ -> Unsupervised_learning_scripts_and_data/
+# Hierarchy: GEMs_construction/ -> GEMS_Code_for_Construction/ -> src/ -> old/
 _SCRIPT_DIR = Path(__file__).resolve().parent
 _DATA_ROOT  = _SCRIPT_DIR.parents[2] / 'Clinical_data_and_models_ids'
 

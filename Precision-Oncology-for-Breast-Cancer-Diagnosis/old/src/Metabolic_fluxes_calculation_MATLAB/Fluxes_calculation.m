@@ -3,7 +3,7 @@ changeCobraSolver('matlab','all');
 %% 
 
 % ── Resolve paths relative to this script's location ──────────────────
-% Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> Unsupervised_learning_scripts_and_data/
+% Hierarchy: Metabolic_fluxes_calculation_MATLAB/ -> src/ -> old/
 %
 % MATLAB Live Editor copies files to a temp directory before running,
 % so mfilename('fullpath') may return a temp path.  We try multiple
@@ -47,7 +47,7 @@ if isempty(scriptDir)
     end
     error(['Could not locate the models.\n' ...
            'In MATLAB, run:\n' ...
-           '  cd ''<repo>/Unsupervised_learning_scripts_and_data/src/Metabolic_fluxes_calculation_MATLAB''\n' ...
+           '  cd ''<repo>/old/src/Metabolic_fluxes_calculation_MATLAB''\n' ...
            'then re-run the script.']);
 end
 
