@@ -112,9 +112,10 @@ The exact same dimensionality reduction and unsupervised learning procedures wer
     - `Merged_TumorPhenotype_PCA_AllData_withClusters.csv`: The complete PCA-transformed metabolic dataset merged with the cluster assignments.
     - `PatientClusters_TumorPhenotype_PCA.csv`: The list of patients and their respective PCA cluster labels.
     - `TOP_*.png`: Visualizations of the best PCA clustering results.
-  - `resultados_TumorPhenotype_UMAP_metrics_actualizado_sinl2/`: UMAP clustering metrics and assignments, also excluding the L2 norm (sinl2). In addition to the files mentioned above (adapted for UMAP), this folder includes:
-    - `Estadisticas_Metabolicas_Clusters.csv` & `Resumen_Significancia_PorGrupo.csv`: Detailed statistical analyses and significance summaries between the formed clusters.
-    - `Reporte_UMAP_*.pdf`: An automated, comprehensive PDF report containing the top clustering metrics and distributions.
+  - `results_TumorPhenotype_UMAP_metrics_updated_nol2/`: UMAP clustering metrics and assignments, also excluding the L2 norm metabolic fluxes (nol2). Inside, you will find:
+    - `Merged_TumorPhenotype_UMAP_AllData.csv` and `Merged_TumorPhenotype_UMAP_AllData_withClusters.csv`: The metabolic dataset merged with clinical/survival data, without and with the UMAP cluster assignments.
+    - `PatientClusters_TumorPhenotype_UMAP.csv`: The list of patients and their respective UMAP cluster labels.
+    - `TOP_*.png`: Visualizations of the best UMAP clustering results.
 - **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Metabolic_data_analysis/ML_models_using_metabolic_data/Pareto_Exploratory_Analysis`
     - Data_analysis_pareto.ipynb Analyzes Pareto solutions of all patients, including Divergent an Core patients. 
     

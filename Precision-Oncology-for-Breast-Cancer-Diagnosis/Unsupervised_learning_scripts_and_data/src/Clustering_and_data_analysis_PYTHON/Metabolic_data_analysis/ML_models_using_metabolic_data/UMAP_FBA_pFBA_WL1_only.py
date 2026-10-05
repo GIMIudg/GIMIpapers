@@ -58,7 +58,7 @@ _DATA_ROOT  = _SCRIPT_DIR.parents[3] / 'Clinical_data_and_models_ids'
 PATH_FEATURES = str(_DATA_ROOT / 'Metabolic_Data' / 'FeatureMatrix_TumorPhenotype_agregado.csv')
 PATH_CLINICAL = str(_DATA_ROOT / 'Clinical_Data' / 'TCGA-BRCA.clinical.tsv')
 PATH_SURVIVAL = str(_DATA_ROOT / 'Clinical_Data' / 'TCGA-BRCA.survival.tsv.gz')
-OUT_DIR       = "results_TumorPhenotype_UMAP_metrics_updated_noL2"
+OUT_DIR       = "results_TumorPhenotype_UMAP_metrics_updated_nol2"
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Random seeds for stochastic algorithms and manifold projections
