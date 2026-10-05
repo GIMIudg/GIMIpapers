@@ -1,49 +1,186 @@
-# Precision Oncology for Breast Cancer Metabolic Phenotyping
+# BRCA Metabolic Flux Analysis — Unified Pipeline
 
-Master’s Thesis Research Repository  
-M.Sc. in Bioengineering and Intelligent Computing  
-University of Guadalajara (CUCEI)
+Reproducible Google Colab notebook for the paper:
 
-This repository contains scripts, workflows, and resources used to reproduce the results of my Master’s thesis:
-“Precision Oncology for Breast Cancer Diagnosis.”
+> **Patient-Specific Metabolic Fluxes Reveal Functional Organization and Heterogeneity in Breast Cancer**  
+> Ruiz Robles E., Rincón-Ballesteros R., Chacón Méndez S.A., Alvarez-Padilla F.J., Preciat G.  
+> University of Guadalajara, Mexico. 2025.
 
-🧬 Overview
+---
 
-The project focuses on generating personalized Genome-Scale Metabolic Models (GEMs) for breast cancer patients and apply Unsupervised Learning to classify patiens using clinical and metabolic data
+## Project Structure
 
-📂 Contents of the repository
-1. Clinical_data_and_models_ids
+```
+Precision-Oncology-for-Breast-Cancer-Diagnosis/
+├── Unsupervised_learning_scripts_and_data/
+│   ├── Clinical_data_and_models_ids/      ← Clinical metadata and GEM files
+│   │   ├── All_models_created/            ← Contains all 1,226 generated models
+│   │   ├── Clinical_Data/                 ← Downloaded clinical and survival datasets. Metadata was downloaded from [UCSC Xena](https://xena.ucsc.edu/), while the clinical and survival data were obtained from [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA).
+│   │   ├── GEMs_Data_for_construction/    ← Data used during GEMs construction
+│   │   └── Metabolic_Data/                ← Flux results and Pareto solutions
+│   └── src/                               ← Analysis scripts (MATLAB, Python, R)
+├── main_notebook/
+│   ├── BRCA_Paired_Patient_Classification.ipynb ← Supervised learning notebook
+│   └── Figures/                           ← Output figures and plots
+├── requirements.txt                       ← Python dependencies
+└── README.md                              ← Project overview & reproducibility guide
+```
 
--All data used in this project
+- **`Clinical_Data/`**: Metadata was downloaded from [UCSC Xena](https://xena.ucsc.edu/), while the clinical and survival data were obtained from [TCGA-BRCA](https://portal.gdc.cancer.gov/projects/TCGA-BRCA).
 
--1226 Genome Scale Metabolic Models
+## How to Run
 
-2. src
+### Environment Setup (Python)
 
--MATLAB scripts for building patient-specific metabolic models
+It is highly recommended to use a virtual environment to avoid dependency conflicts:
 
--Flux balance analysis
+```bash 
+# Create a virtual environment
+python3 -m venv env
+source env/bin/activate  # On Windows use: env\Scripts\activate
 
--Calculation of key metabolic phenotypes and pathway activity metrics
+# Install the required dependencies
+pip install -r requirements.txt
 
--Patient clustering using multiple omics layers
+# Launch Jupyter Notebook
+jupyter notebook
+```
+Then, you can open `main_notebook/BRCA_Paired_Patient_Classification.ipynb` to execute the supervised learning pipeline. For the rest of the analyses, follow the **Detailed Reproducibility Guide** below.
 
--Clustering analyses performed using: Clinical data and metabolic data
+---
 
-## Clustering
-<img width="1330" height="1202" alt="image" src="https://github.com/user-attachments/assets/88231625-0054-4181-8e72-442dbc5ca9d2" />
+## Detailed Reproducibility Guide
 
-<img width="1330" height="1202" alt="image" src="https://github.com/user-attachments/assets/a24958c1-0025-4f04-b176-7e31d120ec99" />
+Follow the steps below to fully reproduce the results of this project across the various scripts. It is highly recommended to install the dependencies listed in `requirements.txt` to ensure the Python algorithms run exactly as intended.
 
-## Key findings
-<img width="2250" height="2625" alt="image" src="https://github.com/user-attachments/assets/55273bb0-db31-44d9-a676-a818bbc43fd1" />
+### 1. Creation of Metabolic Models
 
-A key result is the identification of a subgroup characterized by globally reduced metabolic activity (Divergent group), with coordinated decreases in oxidative phosphorylation, the TCA cycle, and nucleotide metabolism. This challenges the classical view of uniformly upregulated cancer metabolism and supports the existence of alternative metabolic regimes. This subgroup of patients is associated to less survival probability, triple negative cancer, and African ancestry.
+To construct the metabolic models, we utilized "Recon3D_301.mat" as the base model, which contains all known human metabolic reactions. Using the `xomicsToModel` algorithm implemented in the COBRAToolbox, 1,226 patient-specific breast cancer models were created.
 
-## Author
+#### Data Processing
+1. **Gene Expression Data:** Gene expression profiles for 1,226 breast cancer patients were obtained from the TCGA (The Cancer Genome Atlas) project.
+2. **Structuring:** The data was structured into an individual `.txt` file per patient.
+3. **Preprocessing:** During preprocessing, we found that multiple Ensembl identifiers mapped to the same Entrez ID. To resolve this and prevent gene duplication, we calculated the average of their corresponding expression levels. Genes with null (zero) expression values were preserved.
+4. **Model Initialization:** The resulting matrix was processed using the `xomicsToModel` function. The scripts responsible for this data processing are `creator.py` and `utils.py`.
+5. **Bibliomic Data:** Simultaneously, an Excel file named `Bibliomics_Data` was curated. It contains a list of genes associated with breast cancer, the mandatory inclusion of a biomass reaction, and specific constraints required to generate consistent personalized models.
 
-Eduardo Ruiz Robles  
-Biomedical Engineer
+#### Model Construction
+- **Script:** A MATLAB script named `Construction_Gems` was used. The `xomicsToModel` tool utilizes the gene expression and bibliomics data to find all possible reactions given the selected genes, ensuring the models are thermodynamically consistent. This procedure is based on the methodology described in:
+  > Preciat, G., Wegrzyn, A.B., Luo, X. et al. (2026). XomicsToModel: omics data integration and generation of thermodynamically consistent metabolic models. *Nat Protoc*, 21, 2665–2706. [https://doi.org/10.1038/s41596-025-01288-9](https://doi.org/10.1038/s41596-025-01288-9)
+- **Data directory:** `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids/GEMs_Data_for_construction`
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/GEMS_Code_for_Construction/GEMs_construction`
 
-- GitHub: https://github.com/edur19
-- LinkedIn: https://www.linkedin.com/in/eduardo-ruiz-robles-9b019728
+### 2. Obtaining Metabolic Fluxes
+
+Once the models were built, various general and secondary metabolic fluxes were calculated. These fluxes act as descriptors that reflect the heterogeneity across the different metabolic models.
+
+- **Data directory:** `Unsupervised_learning_scripts_and_data/Clinical_data_and_models_ids/GEMs_Data_for_construction`
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Metabolic_fluxes_calculation_MATLAB`
+- **Main Script:** `Fluxes_calculation.m` runs the principal flux optimizations.
+- **Pareto Optimization Script:** `Pareto_multiobjective_1226_models.m` calculates multi-objective optimality in the metabolic models. This Pareto procedure follows the same methodology described in: 
+  > Dai, Z., Yang, S., Xu, L., et al. (2019). Identification of cancer-associated metabolic vulnerabilities by modeling multi-objective optimality in metabolism. *Cell Communication and Signaling*, 17, 124. [https://doi.org/10.1186/s12964-019-0439-y](https://doi.org/10.1186/s12964-019-0439-y)
+- **Model Names Extraction:** `Models_names_saved.m` is a utility script that exclusively extracts and saves the names of the generated models.
+- **Auxiliary functions:** `PrepareModel.m` and `countcarbons.m` ensure that the biomass reaction is correctly present in the model before running the flux optimizations.
+
+### 3. Supervised Learning Pipeline
+
+A pipeline was designed for processing metabolic data and incorporating it into supervised learning models to predict whether samples are tumor or normal tissue.
+
+- **Directory:** `main_notebook/`
+- **Dependencies:** Python algorithms require exact library versions to ensure reproducibility, as updates to libraries may alter random number generation or specific metric calculations. Please install them using the `requirements.txt` file located in the root of the repository.
+
+### 4. Unsupervised Learning and Clinical/Metabolic Correlations
+
+We then searched for correlations between clinical and metabolic data using unsupervised learning models and statistical metrics.
+
+#### Clinical Data Analysis
+Clinical data was processed by performing a refined selection of variables across different datasets. Two dimensionality reduction methods (PCA and UMAP) and various unsupervised learning models were applied.
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Clinical_data_analysis/ML_models_using_clinical_data`
+- This folder contains `.py` scripts for PCA and UMAP that run the models using the refined variable selection.
+- **Results:** The outputs are saved in the following folders:
+  - `Results_clustering_PCA_reduced_selection/`: Contains the evaluation metrics and cluster assignments generated by applying PCA on the refined clinical variables. Inside, you will find:
+    - `DATA_MASTER_CLUSTERS_AND_CLINICAL.csv`: A unified dataset combining the clinical parameters with the assigned cluster labels.
+    - `patients_clustered_...csv`: Files detailing the specific patient cohorts and their corresponding clusters.
+    - `TOP_*.png`: Visualizations of the top-performing clustering algorithms (e.g., Agglomerative, DBSCAN), with evaluation metrics (Silhouette, Davies-Bouldin, Calinski-Harabasz) embedded in the filenames.
+  - `Results_clustering_UMAP_reduced_selection/`: Contains the exact same structure of results and metrics, but generated using the UMAP dimensionality reduction technique.
+
+#### Metabolic Data Analysis
+The exact same dimensionality reduction and unsupervised learning procedures were applied to the metabolic data.
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Metabolic_data_analysis/ML_models_using_metabolic_data`
+- **Results:** The outputs from these analyses are stored in:
+  - `results_TumorPhenotype_PCA_metrics_updated_nol2/`: PCA clustering metrics and assignments, explicitly excluding the metabolic fluxes calculated with the L2 norm (nol2). Inside, you will find:
+    - `Merged_TumorPhenotype_PCA_AllData_withClusters.csv`: The complete PCA-transformed metabolic dataset merged with the cluster assignments.
+    - `PatientClusters_TumorPhenotype_PCA.csv`: The list of patients and their respective PCA cluster labels.
+    - `TOP_*.png`: Visualizations of the best PCA clustering results.
+  - `resultados_TumorPhenotype_UMAP_metrics_actualizado_sinl2/`: UMAP clustering metrics and assignments, also excluding the L2 norm (sinl2). In addition to the files mentioned above (adapted for UMAP), this folder includes:
+    - `Estadisticas_Metabolicas_Clusters.csv` & `Resumen_Significancia_PorGrupo.csv`: Detailed statistical analyses and significance summaries between the formed clusters.
+    - `Reporte_UMAP_*.pdf`: An automated, comprehensive PDF report containing the top clustering metrics and distributions.
+
+#### Cluster Comparisons & Concordance
+Once clusters were generated from both clinical and metabolic data, the algorithms were compared using the Adjusted Rand Index (ARI).
+- **Code directory:** `Unsupervised_learning_scripts_and_data/src/Clustering_and_data_analysis_PYTHON/Cluster_correlations`
+- **Script:** `correlations_main.py` is responsible for finding the pair of clinical and metabolic algorithms with the highest number of concordant patients. This identified the divergent group with a characteristic quiescent signature.
+- **Generated Results:**
+  - `results/divergent_patients_study_pyn.csv`: Contains the patient codes and their divergent classification.
+  - `results/core_patients_correlation_ParetoAndNorms`: Contains the patients belonging to the "core" group.
+  - Additional outputs include figures of the selected clusters, a heatmap of the algorithms that grouped similarly, and a correlation matrix of the groups.
+
+#### Statistical Analysis
+Finally, significant differences and effect sizes between groups were analyzed.
+- **Metrics:** Mann-Whitney U test, Cliff's Delta, and Benjamini-Hochberg correction.
+- **Script:** `Clustering_Correlation_Analysis.ipynb` (written in R due to its superior capabilities for statistical graphics and biological analysis).
+- **Results:** All generated figures and plots from this analysis are stored in the `Figures_PLOS_v6` folder.
+
+---
+
+## What the Notebook Produces
+
+### Supervised Learning 
+| Figure | Description |
+|---|---|
+| `Fig04_UMAP_before_after_feature_selection.png` | UMAP projection before/after feature selection |
+| `Fig05_confusion_matrices.png` | KNN vs Decision Tree confusion matrices |
+| `Fig06_ROC_AUC_curves.png` | ROC-AUC curves for all 5 classifiers |
+| `Fig07_decision_matrix.png` | Multi-criteria classifier comparison heatmap |
+
+### Unsupervised Clustering 
+| Figure | Description |
+|---|---|
+| `Fig09_clinical_cluster_3D.png` | Clinical patient clustering — 3D view |
+| `Fig10_metabolic_cluster_3D.png` | Metabolic patient clustering — 3D view |
+| `Fig08_top10_ARI_heatmap.png` | Top 10 concordances (ARI) clinical vs metabolic |
+| `Fig02_contingency_matrix.png` | Patient distribution clinical vs metabolic clusters |
+| `Fig03_cohort_pie.png` | Cohort composition: Core vs Divergent |
+
+---
+
+## Key Results Reproduced
+
+| Result | Paper | Notebook |
+|---|---|---|
+| Best classifier accuracy | KNN 0.988 | Computed |
+| Best ROC-AUC | KNN/SVM 1.000 | Computed |
+| Metabolic clustering Silhouette | ~0.98 | Computed |
+| Clinical clustering Silhouette | ~0.87 | Computed |
+| Divergent group size | ~3.3% (n≈39) | Computed |
+| Divergent subgroup: TNBC enrichment | χ², p=1.99×10⁻¹² | Computed |
+
+---
+
+## Data Availability
+
+- **Repository:** https://github.com/GIMIudg/GIMIpapers/tree/main/Precision-Oncology-for-Breast-Cancer-Diagnosis
+- **Zenodo archive:** https://doi.org/10.5281/zenodo.19339596
+- **TCGA-BRCA:** https://portal.gdc.cancer.gov/projects/TCGA-BRCA
+
+---
+
+## Citation
+
+If you use this pipeline, please cite:
+
+```
+Ruiz Robles E., Rincón-Ballesteros R., Chacón Méndez S.A., Alvarez-Padilla F.J., Preciat G. (2025).
+Patient-specific metabolic fluxes reveal functional organization and heterogeneity in breast cancer.
+DOI: 10.5281/zenodo.19339596
+```
