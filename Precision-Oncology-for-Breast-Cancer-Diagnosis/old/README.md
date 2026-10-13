@@ -1,50 +1,17 @@
-# Precision Oncology for Breast Cancer Metabolic Phenotyping
+# old
 
-Master’s Thesis Research Repository  
-M.Sc. in Bioengineering and Intelligent Computing  
-University of Guadalajara (CUCEI)
+Code and inputs of the previous analysis (2025 models, submitted manuscript). Not used by the current pipeline; kept for traceability.
+`inventory_2026-10-05.csv` lists every file of the repository before the reorganisation: original path, new path, what it is, which script generated it, what used it and the decision (old / toBeDeleted).
 
-This repository contains scripts, workflows, and resources used to reproduce the results of my Master’s thesis:
-“Precision Oncology for Breast Cancer Diagnosis.”
-
-🧬 Overview
-
-The project focuses on generating personalized Genome-Scale Metabolic Models (GEMs) for breast cancer patients and apply Unsupervised Learning to classify patiens using clinical and metabolic data
-
-- For ensure the code runs well, you might have to modified some paths in the Machine Learning Scripts
-📂 Contents of the repository
-1. Clinical_data_and_models_ids
-
--All data used in this project
-
--1226 Genome Scale Metabolic Models
-
-2. src
-
--MATLAB scripts for building patient-specific metabolic models
-
--Flux balance analysis
-
--Calculation of key metabolic phenotypes and pathway activity metrics
-
--Patient clustering using multiple omics layers
-
--Clustering analyses performed using: Clinical data and metabolic data
-
-## Clustering
-<img width="1330" height="1202" alt="image" src="https://github.com/user-attachments/assets/88231625-0054-4181-8e72-442dbc5ca9d2" />
-
-<img width="1330" height="1202" alt="image" src="https://github.com/user-attachments/assets/a24958c1-0025-4f04-b176-7e31d120ec99" />
-
-## Key findings
-<img width="2250" height="2625" alt="image" src="https://github.com/user-attachments/assets/55273bb0-db31-44d9-a676-a818bbc43fd1" />
-
-A key result is the identification of a subgroup characterized by globally reduced metabolic activity (Divergent group), with coordinated decreases in oxidative phosphorylation, the TCA cycle, and nucleotide metabolism. This challenges the classical view of uniformly upregulated cancer metabolism and supports the existence of alternative metabolic regimes. This subgroup of patients is associated to less survival probability, triple negative cancer, and African ancestry.
-
-## Author
-
-Eduardo Ruiz Robles  
-Biomedical Engineer
-
-- GitHub: https://github.com/edur19
-- LinkedIn: https://www.linkedin.com/in/eduardo-ruiz-robles-9b019728
+| Folder | Content | Replaced by |
+|---|---|---|
+| `evidence_divergent_artifact/` | files documenting the "Divergent" artefact — **keep** | — |
+| `gem_construction/` | `creator.py` (expression → genes,expVal), `GEMs_creation.m`, `inputs/` (bibliomicData, Recon3D_301.mat, model IDs) | notebook 01, `matlab/modelGen.m`, `bibliomicData_new.xlsx` |
+| `flux_calculation_matlab/` | `Fluxes_calculation.m`, `prepareModel.m`, Pareto scripts | `matlab/BRCA_fluxPipeline.m` |
+| `gem_exploratory_analysis/` | model size / similarity scripts (R, MATLAB, notebook) | notebook 02 §7 |
+| `clinical_ml/` | clinical clustering scripts (`previous_versions/`: earlier variants) | notebook 02 §5 |
+| `metabolic_ml/` | metabolic clustering scripts | notebook 02 §4 |
+| `cluster_correlations/` | clinical–metabolic concordance (Core/Divergent) | notebook 02 §5–6 |
+| `pareto_exploration/` | Pareto notebook | notebook 02 §7 |
+| `paired_classification_notebooks/` | student notebooks of Oct 2026 (paired classification, script explanation) | notebook 02 §3 |
+| `previous_readmes/` | previous READMEs, `.gitignore`, `.gitattributes`, `requirements.txt` | — |

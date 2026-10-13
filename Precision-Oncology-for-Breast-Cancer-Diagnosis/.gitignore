@@ -1,2 +1,15 @@
 .DS_Store
 Icon?
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.Rhistory
+.RData
+.Rproj.user/
+*.asv
+# data and results live in Drive, not in Git
+results/
+data/
+pythonResults/
+matlabResults/
+*_Xomics.txt
