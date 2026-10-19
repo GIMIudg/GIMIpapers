@@ -1,0 +1,10 @@
+# the project folder holds data and results; only code and the model live here
+project_dir.txt
+results/
+reports/
+*.asv
+*.mex*
+.DS_Store
+Icon?
+__pycache__/
+.ipynb_checkpoints/

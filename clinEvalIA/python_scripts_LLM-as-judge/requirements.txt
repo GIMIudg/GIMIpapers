@@ -1,0 +1,25 @@
+annotated-types @ file:///C:/miniconda3/conda-bld/annotated-types_1761745026115/work
+anthropic @ file:///C:/Users/task_176605448308778/croot/anthropic_1766054604334/work
+anyio @ file:///C:/Users/task_177313442937352/croot/anyio_1773134524846/work
+certifi @ file:///C:/Users/task_176765924091863/croot/certifi_1767659364229/work/certifi
+distro @ file:///C:/Users/dev-admin/buildout/croot/distro_1759969922852/work
+et_xmlfile @ file:///C:/Users/dev-admin/buildout/croot/et_xmlfile_1765237372560/work
+h11 @ file:///C:/miniconda3/conda-bld/h11_1761931280691/work
+httpcore @ file:///C:/Users/dev-admin/buildout/croot/httpcore_1761939678908/work
+httpx @ file:///C:/Users/dev-admin/buildout/croot/httpx_1761941099328/work
+idna @ file:///C:/Users/dev-admin/buildout/croot/idna_1762551230734/work
+jiter @ file:///C:/miniconda3/conda-bld/jiter_1762897337474/work
+mkl-service==2.5.2
+mkl_fft @ file:///C:/miniconda3/conda-bld/mkl_fft_1761592920453/work
+mkl_random @ file:///C:/miniconda3/conda-bld/mkl_random_1761593081220/work
+numpy @ file:///C:/Users/task_177399617106190/croot/numpy_and_numpy_base_1773996245465/work/dist/numpy-2.4.3-cp314-cp314-win_amd64.whl#sha256=00b9981824e33220ec0094f15ce1fb0ee0c22ccc06d3002ed943648f8932e812
+openpyxl @ file:///C:/Users/dev-admin/buildout/croot/openpyxl_1759965765142/work
+pandas @ file:///C:/Users/task_177324589115043/croot/pandas_1773246095044/work
+pydantic @ file:///C:/Users/task_177313434259041/croot/pydantic_1773134444709/work
+pydantic_core @ file:///C:/miniconda3/conda-bld/pydantic-core_1764009797134/work
+python-dateutil @ file:///C:/Users/dev-admin/buildout/croot/python-dateutil_1759954839763/work
+six @ file:///C:/Users/dev-admin/buildout/croot/six_1759954493303/work
+sniffio @ file:///C:/miniconda3/conda-bld/sniffio_1764329214965/work
+typing-inspection @ file:///C:/Users/dev-admin/buildout/croot/typing-inspection_1761942581967/work
+typing_extensions @ file:///C:/Users/dev-admin/buildout/croot/typing_extensions_1759955056205/work
+tzdata @ file:///home/task_176829656558347/croot/python-tzdata_1768296637279/work

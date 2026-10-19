@@ -1,0 +1,904 @@
+{
+  "ROOT": {
+    "n_questions": 38,
+    "n_in_repeat": 17,
+    "clarity": {
+      "mean": 4.53,
+      "std": 0.65
+    },
+    "relevance": {
+      "mean": 3.74,
+      "std": 1.48
+    },
+    "completeness": {
+      "mean": 3.82,
+      "std": 1.09
+    },
+    "granularity": {
+      "mean": 2.92,
+      "std": 1.15
+    },
+    "avg_overall": 3.75,
+    "n_needs_improvement": 19
+  },
+  "SECCIÓN 6.1. Inicio de vida sexual": {
+    "n_questions": 3,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.67,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 1.67,
+      "std": 0.58
+    },
+    "completeness": {
+      "mean": 4.33,
+      "std": 0.58
+    },
+    "granularity": {
+      "mean": 2.33,
+      "std": 1.15
+    },
+    "avg_overall": 3.25,
+    "n_needs_improvement": 1
+  },
+  "SECCIÓN 6.2. Métodos anticonceptivos": {
+    "n_questions": 9,
+    "n_in_repeat": 8,
+    "clarity": {
+      "mean": 4.22,
+      "std": 0.97
+    },
+    "relevance": {
+      "mean": 2.0,
+      "std": 0.5
+    },
+    "completeness": {
+      "mean": 4.33,
+      "std": 0.71
+    },
+    "granularity": {
+      "mean": 3.33,
+      "std": 1.32
+    },
+    "avg_overall": 3.47,
+    "n_needs_improvement": 2
+  },
+  "SECCIÓN 7. Gineco‑Obstétricos (Sólo si aplica)": {
+    "n_questions": 4,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.5,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 2.75,
+      "std": 1.5
+    },
+    "completeness": {
+      "mean": 3.25,
+      "std": 1.26
+    },
+    "granularity": {
+      "mean": 3.0,
+      "std": 1.41
+    },
+    "avg_overall": 3.38,
+    "n_needs_improvement": 2
+  },
+  "SECCIÓN 8.1. Cirugías": {
+    "n_questions": 9,
+    "n_in_repeat": 8,
+    "clarity": {
+      "mean": 4.56,
+      "std": 0.53
+    },
+    "relevance": {
+      "mean": 4.33,
+      "std": 1.0
+    },
+    "completeness": {
+      "mean": 4.11,
+      "std": 0.6
+    },
+    "granularity": {
+      "mean": 3.11,
+      "std": 1.05
+    },
+    "avg_overall": 4.03,
+    "n_needs_improvement": 3
+  },
+  "SECCIÓN 8.2. Alergias": {
+    "n_questions": 11,
+    "n_in_repeat": 10,
+    "clarity": {
+      "mean": 4.36,
+      "std": 0.5
+    },
+    "relevance": {
+      "mean": 4.55,
+      "std": 0.69
+    },
+    "completeness": {
+      "mean": 3.64,
+      "std": 1.12
+    },
+    "granularity": {
+      "mean": 3.27,
+      "std": 1.1
+    },
+    "avg_overall": 3.95,
+    "n_needs_improvement": 2
+  },
+  "SECCIÓN 8.3. Transfusiones": {
+    "n_questions": 14,
+    "n_in_repeat": 13,
+    "clarity": {
+      "mean": 4.36,
+      "std": 0.84
+    },
+    "relevance": {
+      "mean": 3.64,
+      "std": 1.08
+    },
+    "completeness": {
+      "mean": 3.86,
+      "std": 1.17
+    },
+    "granularity": {
+      "mean": 2.86,
+      "std": 0.86
+    },
+    "avg_overall": 3.68,
+    "n_needs_improvement": 6
+  },
+  "SECCIÓN 9.1. Enfermedades cardiovasculares": {
+    "n_questions": 13,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.92,
+      "std": 0.28
+    },
+    "relevance": {
+      "mean": 4.0,
+      "std": 1.08
+    },
+    "completeness": {
+      "mean": 3.92,
+      "std": 1.04
+    },
+    "granularity": {
+      "mean": 2.92,
+      "std": 1.44
+    },
+    "avg_overall": 3.94,
+    "n_needs_improvement": 4
+  },
+  "SECCIÓN 9.2. Enfermedades cerebrovasculares": {
+    "n_questions": 5,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.4,
+      "std": 0.55
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": 0.71
+    },
+    "granularity": {
+      "mean": 3.4,
+      "std": 0.89
+    },
+    "avg_overall": 4.2,
+    "n_needs_improvement": 1
+  },
+  "SECCIÓN 9.3. Diabetes mellitus": {
+    "n_questions": 4,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.75,
+      "std": 0.5
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.25,
+      "std": 0.5
+    },
+    "granularity": {
+      "mean": 3.75,
+      "std": 0.5
+    },
+    "avg_overall": 4.44,
+    "n_needs_improvement": 0
+  },
+  "SECCIÓN 9.4. Hipertensión arterial": {
+    "n_questions": 3,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.67,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.33,
+      "std": 0.58
+    },
+    "granularity": {
+      "mean": 3.33,
+      "std": 0.58
+    },
+    "avg_overall": 4.33,
+    "n_needs_improvement": 0
+  },
+  "SECCIÓN 9.5. Dislipidemias": {
+    "n_questions": 3,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.33,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 4.33,
+      "std": 0.58
+    },
+    "completeness": {
+      "mean": 4.67,
+      "std": 0.58
+    },
+    "granularity": {
+      "mean": 3.0,
+      "std": 1.0
+    },
+    "avg_overall": 4.08,
+    "n_needs_improvement": 1
+  },
+  "SECCIÓN 9.6. Enfermedades pulmonares": {
+    "n_questions": 6,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": 0.0
+    },
+    "relevance": {
+      "mean": 3.17,
+      "std": 1.47
+    },
+    "completeness": {
+      "mean": 3.5,
+      "std": 0.55
+    },
+    "granularity": {
+      "mean": 3.17,
+      "std": 0.41
+    },
+    "avg_overall": 3.46,
+    "n_needs_improvement": 0
+  },
+  "SECCIÓN 9.7. Enfermedades renales": {
+    "n_questions": 5,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.4,
+      "std": 0.55
+    },
+    "relevance": {
+      "mean": 2.8,
+      "std": 1.3
+    },
+    "completeness": {
+      "mean": 4.2,
+      "std": 0.84
+    },
+    "granularity": {
+      "mean": 3.4,
+      "std": 1.14
+    },
+    "avg_overall": 3.7,
+    "n_needs_improvement": 1
+  },
+  "SECCIÓN 9.8. Enfermedades hepáticas": {
+    "n_questions": 1,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 2.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "avg_overall": 3.0,
+    "n_needs_improvement": 0
+  },
+  "9.8.1.a CIRROSIS HEPÁTICA": {
+    "n_questions": 4,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": 0.0
+    },
+    "relevance": {
+      "mean": 2.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 3.75,
+      "std": 0.96
+    },
+    "granularity": {
+      "mean": 3.25,
+      "std": 0.96
+    },
+    "avg_overall": 3.25,
+    "n_needs_improvement": 1
+  },
+  "9.8.1.b HEPATITIS CRÓNICA": {
+    "n_questions": 1,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 2.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "avg_overall": 3.25,
+    "n_needs_improvement": 0
+  },
+  "9.8.1.c HÍGADO GRASO": {
+    "n_questions": 1,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 2.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "avg_overall": 3.0,
+    "n_needs_improvement": 0
+  },
+  "SECCIÓN 9.9. Enfermedades del tejido conectivo y autoinmunes": {
+    "n_questions": 3,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.33,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": 1.0
+    },
+    "granularity": {
+      "mean": 4.0,
+      "std": 1.0
+    },
+    "avg_overall": 4.33,
+    "n_needs_improvement": 0
+  },
+  "SECCIÓN 9.10. Úlcera péptica": {
+    "n_questions": 5,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.2,
+      "std": 0.45
+    },
+    "relevance": {
+      "mean": 1.8,
+      "std": 0.84
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": 0.71
+    },
+    "granularity": {
+      "mean": 2.6,
+      "std": 0.55
+    },
+    "avg_overall": 3.15,
+    "n_needs_improvement": 2
+  },
+  "SECCIÓN 9.11. Demencia": {
+    "n_questions": 4,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.75,
+      "std": 0.5
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": 0.82
+    },
+    "granularity": {
+      "mean": 3.5,
+      "std": 0.58
+    },
+    "avg_overall": 4.31,
+    "n_needs_improvement": 0
+  },
+  "SECCIÓN 9.12. Cáncer (tumores sólidos)": {
+    "n_questions": 11,
+    "n_in_repeat": 9,
+    "clarity": {
+      "mean": 4.73,
+      "std": 0.47
+    },
+    "relevance": {
+      "mean": 4.18,
+      "std": 0.6
+    },
+    "completeness": {
+      "mean": 4.09,
+      "std": 0.54
+    },
+    "granularity": {
+      "mean": 3.36,
+      "std": 0.5
+    },
+    "avg_overall": 4.09,
+    "n_needs_improvement": 0
+  },
+  "SECCIÓN 9.13. Leucemia y linfomas": {
+    "n_questions": 1,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 2.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 2.0,
+      "std": NaN
+    },
+    "avg_overall": 3.0,
+    "n_needs_improvement": 1
+  },
+  "Leucemia": {
+    "n_questions": 4,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": 0.0
+    },
+    "relevance": {
+      "mean": 1.75,
+      "std": 0.5
+    },
+    "completeness": {
+      "mean": 3.5,
+      "std": 1.0
+    },
+    "granularity": {
+      "mean": 2.5,
+      "std": 0.58
+    },
+    "avg_overall": 2.94,
+    "n_needs_improvement": 2
+  },
+  "Linfoma/Mieloma": {
+    "n_questions": 4,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": 0.82
+    },
+    "relevance": {
+      "mean": 3.25,
+      "std": 1.5
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": 1.41
+    },
+    "granularity": {
+      "mean": 2.75,
+      "std": 0.96
+    },
+    "avg_overall": 3.5,
+    "n_needs_improvement": 2
+  },
+  "SECCIÓN 9.14. SIDA/VIH": {
+    "n_questions": 4,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.5,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": 1.41
+    },
+    "granularity": {
+      "mean": 3.75,
+      "std": 1.89
+    },
+    "avg_overall": 4.31,
+    "n_needs_improvement": 1
+  },
+  "SECCIÓN 9.15. Otras enfermedades crónicas": {
+    "n_questions": 1,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 2.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 1.0,
+      "std": NaN
+    },
+    "avg_overall": 2.5,
+    "n_needs_improvement": 1
+  },
+  "10. Consulta actual y síntomas": {
+    "n_questions": 62,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 4.27,
+      "std": 0.71
+    },
+    "relevance": {
+      "mean": 4.65,
+      "std": 0.58
+    },
+    "completeness": {
+      "mean": 3.45,
+      "std": 1.14
+    },
+    "granularity": {
+      "mean": 2.68,
+      "std": 1.45
+    },
+    "avg_overall": 3.76,
+    "n_needs_improvement": 32
+  },
+  "11. Medicamentos actuales": {
+    "n_questions": 1,
+    "n_in_repeat": 0,
+    "clarity": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 1.0,
+      "std": NaN
+    },
+    "avg_overall": 3.75,
+    "n_needs_improvement": 1
+  },
+  "11.2.1 Identificación del medicamento": {
+    "n_questions": 1,
+    "n_in_repeat": 1,
+    "clarity": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "avg_overall": 3.75,
+    "n_needs_improvement": 0
+  },
+  "11.2.2 Vía de administración": {
+    "n_questions": 1,
+    "n_in_repeat": 1,
+    "clarity": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "avg_overall": 5.0,
+    "n_needs_improvement": 0
+  },
+  "11.2.3 Dosis y frecuencia": {
+    "n_questions": 3,
+    "n_in_repeat": 3,
+    "clarity": {
+      "mean": 3.67,
+      "std": 1.53
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 3.33,
+      "std": 1.15
+    },
+    "granularity": {
+      "mean": 3.33,
+      "std": 1.53
+    },
+    "avg_overall": 3.83,
+    "n_needs_improvement": 1
+  },
+  "11.2.4 Temporalidad": {
+    "n_questions": 3,
+    "n_in_repeat": 3,
+    "clarity": {
+      "mean": 4.67,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.33,
+      "std": 1.15
+    },
+    "granularity": {
+      "mean": 4.0,
+      "std": 0.0
+    },
+    "avg_overall": 4.5,
+    "n_needs_improvement": 0
+  },
+  "11.2.5 Adherencia y cumplimiento": {
+    "n_questions": 2,
+    "n_in_repeat": 2,
+    "clarity": {
+      "mean": 4.5,
+      "std": 0.71
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.0,
+      "std": 0.0
+    },
+    "granularity": {
+      "mean": 3.5,
+      "std": 0.71
+    },
+    "avg_overall": 4.25,
+    "n_needs_improvement": 0
+  },
+  "11.2.6 Estado del medicamento": {
+    "n_questions": 4,
+    "n_in_repeat": 4,
+    "clarity": {
+      "mean": 4.75,
+      "std": 0.5
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.25,
+      "std": 0.5
+    },
+    "granularity": {
+      "mean": 4.0,
+      "std": 0.0
+    },
+    "avg_overall": 4.5,
+    "n_needs_improvement": 0
+  },
+  "11.2.7 Efectos adversos": {
+    "n_questions": 3,
+    "n_in_repeat": 3,
+    "clarity": {
+      "mean": 4.67,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.67,
+      "std": 0.58
+    },
+    "granularity": {
+      "mean": 3.33,
+      "std": 0.58
+    },
+    "avg_overall": 4.42,
+    "n_needs_improvement": 0
+  },
+  "11.2.8 Prescriptor e indicación": {
+    "n_questions": 1,
+    "n_in_repeat": 1,
+    "clarity": {
+      "mean": 4.0,
+      "std": NaN
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": NaN
+    },
+    "completeness": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "granularity": {
+      "mean": 3.0,
+      "std": NaN
+    },
+    "avg_overall": 3.75,
+    "n_needs_improvement": 0
+  },
+  "13. Estudios complementarios": {
+    "n_questions": 4,
+    "n_in_repeat": 3,
+    "clarity": {
+      "mean": 4.5,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 4.5,
+      "std": 1.0
+    },
+    "completeness": {
+      "mean": 3.25,
+      "std": 0.96
+    },
+    "granularity": {
+      "mean": 2.25,
+      "std": 0.96
+    },
+    "avg_overall": 3.62,
+    "n_needs_improvement": 2
+  },
+  "Detalles de imagen (opcional)": {
+    "n_questions": 3,
+    "n_in_repeat": 3,
+    "clarity": {
+      "mean": 4.67,
+      "std": 0.58
+    },
+    "relevance": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "completeness": {
+      "mean": 4.33,
+      "std": 1.15
+    },
+    "granularity": {
+      "mean": 2.67,
+      "std": 0.58
+    },
+    "avg_overall": 4.17,
+    "n_needs_improvement": 1
+  },
+  "Detalles de bioseñales (opcional)": {
+    "n_questions": 2,
+    "n_in_repeat": 2,
+    "clarity": {
+      "mean": 5.0,
+      "std": 0.0
+    },
+    "relevance": {
+      "mean": 4.5,
+      "std": 0.71
+    },
+    "completeness": {
+      "mean": 3.5,
+      "std": 0.71
+    },
+    "granularity": {
+      "mean": 4.5,
+      "std": 0.71
+    },
+    "avg_overall": 4.38,
+    "n_needs_improvement": 0
+  },
+  "Resultado de valoración/índice (opcional)": {
+    "n_questions": 5,
+    "n_in_repeat": 2,
+    "clarity": {
+      "mean": 3.6,
+      "std": 0.89
+    },
+    "relevance": {
+      "mean": 4.6,
+      "std": 0.89
+    },
+    "completeness": {
+      "mean": 3.4,
+      "std": 1.34
+    },
+    "granularity": {
+      "mean": 2.0,
+      "std": 1.0
+    },
+    "avg_overall": 3.4,
+    "n_needs_improvement": 3
+  }
+}
