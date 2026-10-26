@@ -12,6 +12,14 @@ function BRCA_fluxAnalysis()
 %
 % INPUT   <dataFolder>/matlabResults/models/<sample>_Xomics/Model.mat   (output of modelGen.m)
 %         (.mat files directly in the models folder are also accepted)
+%         uniformMedium.csv (in <dataFolder> or next to this script): uniform growth medium
+%
+% UNIFORM MEDIUM (cfg.mediumFile): the same nutrient environment is imposed on every model before any
+% flux is computed. Exchange reactions listed in the file keep uptake up to concentration/cfg.mediumRefConc
+% (Human Plasma-Like Medium, Cantor et al. Cell 2017, plus serum lipids; glucose 5 mM -> uptake bound 1);
+% listed inorganic species are left unconstrained; every other uptake is closed (secretion is never
+% restricted). If a model cannot reach the biomass lower bound in this medium, the smallest set of extra
+% uptakes that restores feasibility is added (LP) and reported in ModelQC.csv (cfg.mediumRescue).
 % OUTPUT  <dataFolder>/matlabResults/
 %   FeatureMatrix_TumorPhenotype_All.csv  one row per model: Model, Flux_<rxn>_<sol>, metrics <root>_<sol>,
 %                                         SA_<subsystem>_<sol>, Oncomet_<met>_<sol>, nRxns, nMets, nGenes,
@@ -59,6 +67,9 @@ cfg.qpSolver     = 'gurobi';
 cfg.fracOpt      = 0.99;          % biomass kept in pFBA / L1w / L2 / L2w (as in Fluxes_calculation.m)
 cfg.failOnRelaxation = true;      % relaxed models were part of the old "Divergent" artefact
 cfg.failOnEGC    = false;         % ATP made with every uptake closed: FAIL (true) or WARN (false)
+cfg.mediumFile   = 'uniformMedium.csv';  % '' = no medium (model bounds as built by XomicsToModel)
+cfg.mediumRefConc = 5;            % mM that corresponds to an uptake bound of 1 (glucose in HPLM)
+cfg.mediumRescue = true;          % add the minimal extra uptakes needed to reach the biomass lower bound
 % Expression weights for L1w / L2w (model.expressionRxns, linear FPKM):
 %   'lowExpressionCost'  w = 1 - 0.99*e, e = log(1+FPKM) scaled to [0,1]: weakly expressed reactions cost
 %                        more, so flux is routed through expressed ones (default).
@@ -76,7 +87,9 @@ end
 cfg.modelDir = fullfile(cfg.dataFolder, 'matlabResults', 'models');
 cfg.outDir   = fullfile(cfg.dataFolder, 'matlabResults');
 assert(isfolder(cfg.modelDir), 'Model folder not found: %s', cfg.modelDir);
-pmDir = fullfile(cfg.outDir, 'perModel');
+cfg.medium = loadMedium(cfg);
+if isempty(cfg.medium), pmDir = fullfile(cfg.outDir, 'perModel');
+else, pmDir = fullfile(cfg.outDir, 'perModel_uniformMedium'); end
 if ~isfolder(pmDir), mkdir(pmDir); end
 logFile = fullfile(cfg.outDir, 'run_log.txt');
 logmsg(logFile, '=== BRCA_fluxAnalysis started ===');
@@ -248,12 +261,27 @@ if isfield(model, 'relaxationUsed') && (isnumeric(model.relaxationUsed) || islog
     end
 end
 
+% uniform medium
+V.mediumSupplement = '';
+if ~isempty(cfg.medium)
+    model = applyMedium(model, cfg.medium);
+end
+
 % FBA
 V.maxBiomass = NaN; V.fbaStat = NaN; V.vFBA = []; V.biomassLB = NaN;
 if ~isempty(V.bioIdx)
     V.biomassLB = model.lb(V.bioIdx);
     m1 = model; m1.c(V.bioIdx) = 1;
     s = optimizeCbModel(m1, 'max');
+    if ~isempty(cfg.medium) && cfg.mediumRescue && (s.stat ~= 1 || s.f <= cfg.tol)
+        [model, supp] = rescueMedium(model, cfg.medium, V.bioIdx, max(V.biomassLB, cfg.tol));
+        if ~isempty(supp)
+            V.mediumSupplement = strjoin(supp, ';');
+            V.warnings{end+1} = ['medium supplemented with: ' V.mediumSupplement];
+            m1 = model; m1.c(V.bioIdx) = 1;
+            s = optimizeCbModel(m1, 'max');
+        end
+    end
     V.fbaStat = s.stat;
     if s.stat == 1 && s.f > cfg.tol
         V.maxBiomass = s.f; V.vFBA = s.x;
@@ -554,7 +582,7 @@ for k = 1:numel(extra), H{end+1} = extra{k}; D(end+1, :) = {extra{k}, 'qc', '', 
 
 % ---- values
 X = nan(nM, numel(H)); ids = cell(nM, 1);
-qc = cell(nM, 10); par = []; parId = {};
+qc = cell(nM, 11); par = []; parId = {};
 for i = 1:nM
     R = Rs{i}; V = R.V; ids{i} = R.id; c = 0;
     ok = isfield(R, 'sol') && ~strcmp(V.status, 'FAIL');
@@ -586,7 +614,8 @@ for i = 1:nM
     solStat = '';
     if isfield(R, 'sol'), solStat = strjoin(arrayfun(@(q) sprintf('%s=%g', q.name, q.stat), R.sol, 'UniformOutput', false), ';'); end
     qc(i, :) = {R.id, V.status, strjoin(getf(V, 'reasons', {}), ' | '), strjoin(getf(V, 'warnings', {}), ' | '), ...
-        getf(V, 'relaxationUsed', NaN), getf(V, 'biomassLB', NaN), mb, getf(V, 'egcATP', NaN), solStat, getf(R, 'seconds', NaN)};
+        getf(V, 'relaxationUsed', NaN), getf(V, 'biomassLB', NaN), mb, getf(V, 'egcATP', NaN), solStat, getf(R, 'seconds', NaN), ...
+        getf(V, 'mediumSupplement', '')};
     if isfield(R, 'pareto') && ~isempty(R.pareto)
         par = [par; R.pareto]; parId = [parId; repmat({R.id}, size(R.pareto, 1), 1)]; %#ok<AGROW>
     end
@@ -595,7 +624,7 @@ end
 % ---- write
 writeCSV(fullfile(cfg.outDir, 'FeatureMatrix_TumorPhenotype_All.csv'), [{'Model'}, H], ids, X);
 writetable(cell2table(qc, 'VariableNames', {'Model', 'Status', 'FailReasons', 'Warnings', 'RelaxationUsed', ...
-    'BiomassLB', 'MaxBiomass_FBA', 'EGC_ATP_noUptake', 'SolutionStatus', 'Seconds'}), fullfile(cfg.outDir, 'ModelQC.csv'));
+    'BiomassLB', 'MaxBiomass_FBA', 'EGC_ATP_noUptake', 'SolutionStatus', 'Seconds', 'MediumSupplement'}), fullfile(cfg.outDir, 'ModelQC.csv'));
 writetable(cell2table(D, 'VariableNames', {'Column', 'Type', 'Solution', 'Recon3D_ID_or_Name'}), fullfile(cfg.outDir, 'FeatureDictionary.csv'));
 writetable(cell2table([ids, num2cell(X(:, end - 1))], 'VariableNames', {'Model', 'MaxBiomass_FBA'}), fullfile(cfg.outDir, 'MaxBiomass_perModel.csv'));
 if cfg.doPareto
@@ -630,6 +659,65 @@ if ~isempty(X)
     for i = 1:size(X, 1), fprintf(fid, '%s,', idcol{i}); fprintf(fid, fmt, X(i, :)); end
 end
 fclose(fid);
+end
+
+% =============================================================================================
+function med = loadMedium(cfg)
+% uniform medium: exchange ID -> uptake bound (Inf = unconstrained)
+med = [];
+if isempty(cfg.mediumFile), return, end
+f = fullfile(cfg.dataFolder, cfg.mediumFile);
+if ~isfile(f), f = fullfile(fileparts(mfilename('fullpath')), cfg.mediumFile); end
+assert(isfile(f), 'medium file not found: %s', cfg.mediumFile);
+T = readtable(f, 'TextType', 'char', 'Delimiter', ',');
+c = T.concentration_mM;
+if iscell(c), c = str2double(c); end
+med.ids = T.exchange(:);
+med.bound = c(:) / cfg.mediumRefConc;
+med.bound(isnan(med.bound)) = Inf;
+med.file = f;
+end
+
+function model = applyMedium(model, med)
+% close every uptake not in the medium; cap listed uptakes at the medium bound (secretion untouched)
+model.lb0 = model.lb;
+for j = find(startsWith(model.rxns, 'EX_') & model.lb < 0)'
+    k = find(strcmp(med.ids, model.rxns{j}), 1);
+    if isempty(k)
+        model.lb(j) = 0;
+    elseif isfinite(med.bound(k))
+        model.lb(j) = max(model.lb(j), -med.bound(k));
+    end
+    if model.ub(j) < model.lb(j), model.ub(j) = model.lb(j); end   % forced uptake larger than the medium allows
+end
+end
+
+function [model, supp] = rescueMedium(model, med, bioIdx, bioMin)
+% minimal extra uptake (sum) among the exchanges closed by the medium that restores biomass >= bioMin
+supp = {};
+S0 = load_original_bounds(model);
+cand = find(startsWith(model.rxns, 'EX_') & model.lb >= 0 & S0.lb < 0 & ~ismember(model.rxns, med.ids));
+if isempty(cand), return, end
+[m, n] = size(model.S); k = numel(cand);
+lb = model.lb; lb(cand) = S0.lb(cand); lb(bioIdx) = max(lb(bioIdx), bioMin);
+A2 = sparse(1:k, cand, -1, k, n);
+LP.A = [model.S, sparse(m, k); A2, -speye(k)];          % -v_j - u_j <= 0
+LP.b = [model.b; zeros(k, 1)];
+LP.csense = [model.csense; repmat('L', k, 1)];
+LP.c = [zeros(n, 1); ones(k, 1)];
+LP.lb = [lb; zeros(k, 1)]; LP.ub = [model.ub; -S0.lb(cand)];
+LP.osense = 1;
+s = solveCobraLP(LP);
+if s.stat ~= 1, return, end
+u = s.full(n + 1:end);
+use = u > 1e-9;
+model.lb(cand(use)) = -u(use) * (1 + 1e-6);
+supp = model.rxns(cand(use))';
+end
+
+function S0 = load_original_bounds(model)
+% bounds as built by XomicsToModel (kept by applyMedium in model.lb0)
+S0.lb = model.lb0;
 end
 
 % =============================================================================================

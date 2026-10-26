@@ -45,7 +45,8 @@ Data and results are **not** stored in this repository; they live in the project
 | Path | Content |
 |---|---|
 | `notebooks/BRCA_Metabolic_Flux_Pipeline_01.ipynb` | data processing, expression → `genes,expVal` |
-| `notebooks/BRCA_Metabolic_Flux_Pipeline_02.ipynb` | supervised, unsupervised and clinical analysis |
+| `notebooks/BRCA_Metabolic_Flux_Pipeline_02.ipynb` | supervised, unsupervised and clinical analysis; writes every number, table and figure of the manuscript |
+| `notebooks/brca_analysis.py` | helpers for notebook 02: color palette, figure export (PLOS TIFF), statistics, UMAP, Kaplan–Meier/log-rank/Cox, workflow figure |
 | `matlab/modelGen.m` | model generation (XomicsToModel) |
 | `matlab/BRCA_fluxAnalysis.m` | fluxes, metrics, model QC and Pareto surfaces for notebook 02 |
 | `old/` | previous code, kept for traceability (see `old/README.md`, `old/inventory_2026-10-05.csv`) |

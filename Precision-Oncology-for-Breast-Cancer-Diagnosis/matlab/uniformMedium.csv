@@ -1,0 +1,94 @@
+exchange,metabolite,concentration_mM,class,source
+EX_glc_D[e],D-glucose,5.0,carbohydrate,HPLM
+EX_fru[e],fructose,0.04,carbohydrate,HPLM
+EX_gal[e],galactose,0.06,carbohydrate,HPLM
+EX_glyc[e],glycerol,0.12,carbohydrate,HPLM
+EX_lac_L[e],L-lactate,1.6,organic acid,HPLM
+EX_pyr[e],pyruvate,0.05,organic acid,HPLM
+EX_cit[e],citrate,0.13,organic acid,HPLM
+EX_akg[e],2-oxoglutarate,0.005,organic acid,HPLM
+EX_succ[e],succinate,0.02,organic acid,HPLM
+EX_mal_L[e],L-malate,0.005,organic acid,HPLM
+EX_for[e],formate,0.05,organic acid,HPLM
+EX_ac[e],acetate,0.04,organic acid,HPLM
+EX_bhb[e],3-hydroxybutyrate,0.05,organic acid,HPLM
+EX_acetone[e],acetone,0.06,organic acid,HPLM
+EX_urate[e],urate,0.35,organic acid,HPLM
+EX_gly[e],glycine,0.3,amino acid,HPLM
+EX_ala_L[e],L-alanine,0.43,amino acid,HPLM
+EX_arg_L[e],L-arginine,0.11,amino acid,HPLM
+EX_asn_L[e],L-asparagine,0.05,amino acid,HPLM
+EX_asp_L[e],L-aspartate,0.02,amino acid,HPLM
+EX_cys_L[e],L-cysteine,0.04,amino acid,HPLM
+EX_Lcystin[e],L-cystine,0.1,amino acid,HPLM
+EX_glu_L[e],L-glutamate,0.08,amino acid,HPLM
+EX_gln_L[e],L-glutamine,0.55,amino acid,HPLM
+EX_his_L[e],L-histidine,0.11,amino acid,HPLM
+EX_ile_L[e],L-isoleucine,0.07,amino acid,HPLM
+EX_leu_L[e],L-leucine,0.16,amino acid,HPLM
+EX_lys_L[e],L-lysine,0.2,amino acid,HPLM
+EX_met_L[e],L-methionine,0.03,amino acid,HPLM
+EX_phe_L[e],L-phenylalanine,0.08,amino acid,HPLM
+EX_pro_L[e],L-proline,0.2,amino acid,HPLM
+EX_ser_L[e],L-serine,0.15,amino acid,HPLM
+EX_thr_L[e],L-threonine,0.14,amino acid,HPLM
+EX_trp_L[e],L-tryptophan,0.06,amino acid,HPLM
+EX_tyr_L[e],L-tyrosine,0.08,amino acid,HPLM
+EX_val_L[e],L-valine,0.22,amino acid,HPLM
+EX_orn[e],L-ornithine,0.07,amino acid,HPLM
+EX_citr_L[e],L-citrulline,0.04,amino acid,HPLM
+EX_4hpro_LT[e],trans-4-hydroxy-L-proline,0.02,amino acid,HPLM
+EX_taur[e],taurine,0.09,amino acid,HPLM
+EX_creat[e],creatine,0.035,amino acid,HPLM
+EX_crn[e],L-carnitine,0.04,amino acid,HPLM
+EX_acrn[e],O-acetylcarnitine,0.005,amino acid,HPLM
+EX_glyb[e],betaine,0.07,amino acid,HPLM
+EX_gthrd[e],glutathione,0.025,amino acid,HPLM
+EX_urea[e],urea,5.0,nitrogen,HPLM
+EX_nh4[e],ammonium,0.04,nitrogen,HPLM
+EX_hxan[e],hypoxanthine,0.01,nucleobase,HPLM
+EX_uri[e],uridine,0.003,nucleobase,HPLM
+EX_btn[e],biotin,0.00082,vitamin,HPLM
+EX_chol[e],choline,0.0215,vitamin,HPLM
+EX_pnto_R[e],pantothenate,0.00052,vitamin,HPLM
+EX_fol[e],folate,0.0023,vitamin,HPLM
+EX_ncam[e],nicotinamide,0.0082,vitamin,HPLM
+EX_4abz[e],4-aminobenzoate,0.0073,vitamin,HPLM
+EX_pydxn[e],pyridoxine,0.0049,vitamin,HPLM
+EX_ribflv[e],riboflavin,0.00053,vitamin,HPLM
+EX_thm[e],thiamine,0.003,vitamin,HPLM
+EX_adocbl[e],cobalamin,0.0000037,vitamin,HPLM
+EX_inost[e],myo-inositol,0.194,vitamin,HPLM
+EX_hdca[e],palmitate,0.1,lipid,serum free fatty acids
+EX_ocdcea[e],oleate,0.1,lipid,serum free fatty acids
+EX_lnlc[e],linoleate,0.05,lipid,serum free fatty acids
+EX_lnlnca[e],alpha-linolenate,0.005,lipid,serum free fatty acids
+EX_arachd[e],arachidonate,0.005,lipid,serum free fatty acids
+EX_chsterol[e],cholesterol,0.05,lipid,serum lipoproteins
+EX_tag_hs[e],triacylglycerol pool,0.05,biomass precursor,required for biomass feasibility
+EX_pchol_hs[e],phosphatidylcholine pool,0.05,biomass precursor,required for biomass feasibility
+EX_pe_hs[e],phosphatidylethanolamine pool,0.05,biomass precursor,required for biomass feasibility
+EX_ps_hs[e],phosphatidylserine pool,0.05,biomass precursor,required for biomass feasibility
+EX_pglyc_hs[e],phosphatidylglycerol pool,0.05,biomass precursor,required for biomass feasibility
+EX_gluside_hs[e],glucosylceramide pool,0.05,biomass precursor,required for biomass feasibility
+EX_galgluside_hs[e],lactosylceramide pool,0.05,biomass precursor,required for biomass feasibility
+EX_crmp_hs[e],ceramide phosphate pool,0.05,biomass precursor,required for biomass feasibility
+EX_atp[e],ATP,0.05,biomass precursor,required for biomass feasibility
+EX_utp[e],UTP,0.05,biomass precursor,required for biomass feasibility
+EX_aicar[e],AICAR,0.05,biomass precursor,required for biomass feasibility
+EX_ahcys[e],S-adenosyl-L-homocysteine,0.05,biomass precursor,required for biomass feasibility
+EX_ahdt[e],dihydroneopterin triphosphate,0.05,biomass precursor,required for biomass feasibility
+EX_o2[e],oxygen,,inorganic,unconstrained
+EX_h2o[e],water,,inorganic,unconstrained
+EX_h[e],proton,,inorganic,unconstrained
+EX_co2[e],CO2,,inorganic,unconstrained
+EX_hco3[e],bicarbonate,,inorganic,unconstrained
+EX_pi[e],phosphate,,inorganic,unconstrained
+EX_so4[e],sulfate,,inorganic,unconstrained
+EX_na1[e],sodium,,inorganic,unconstrained
+EX_k[e],potassium,,inorganic,unconstrained
+EX_ca2[e],calcium,,inorganic,unconstrained
+EX_cl[e],chloride,,inorganic,unconstrained
+EX_fe2[e],iron(II),,inorganic,unconstrained
+EX_fe3[e],iron(III),,inorganic,unconstrained
+EX_i[e],iodide,,inorganic,unconstrained

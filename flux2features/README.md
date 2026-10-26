@@ -14,6 +14,9 @@ requirement is absent (a missing value, never a zero), and tests that
 representation on the human red blood cell reconstruction RBC-GEM and on its
 thermodynamically consistent subset.
 
+This folder is part of [GIMIpapers](https://github.com/GIMIudg/GIMIpapers); releases are
+archived at Zenodo ([record 19339596](https://zenodo.org/records/19339596)).
+
 ## Contents
 
 | path | what it is |
@@ -22,7 +25,7 @@ thermodynamically consistent subset.
 | `matlab/flux2feature.m` | the representation on its own, base MATLAB, no toolbox |
 | `matlab/test_flux2feature.m`, `matlab/flux2feature_reference.csv` | its test against reference values from the Python engine |
 | `notebook/metabolic_flux_phenotyping.ipynb` | the whole analysis: export of the MATLAB archives, sampling diagnostics, descriptors, quality control, every analysis, figure and supplementary table, and the build of the manuscript |
-| `data/RBC-GEM.mat` | the reconstruction as used (MD5 `294801a126d7dd89977ee7c3061de4b5`) |
+| `data/RBC-GEM.mat` | RBC-GEM v1.3.0 as used ([commit 43fd381](https://github.com/z-haiman/RBC-GEM/commit/43fd381d9eb8a8a4079629012362312960e1c009); MD5 `294801a126d7dd89977ee7c3061de4b5`). Cite Haiman ZB, Key A, D'Alessandro A, Palsson BO. *PLoS Comput Biol* 2025;21(3):e1012109 |
 
 ## Running it
 
