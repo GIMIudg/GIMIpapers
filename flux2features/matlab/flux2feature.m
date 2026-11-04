@@ -43,7 +43,8 @@ function [features, info, comparison] = flux2feature(model, fluxData, flux2Compa
 %                    sinks and demand reactions, so pass this explicitly if
 %                    your model distinguishes them.
 %       'Pathways', 'PathwayReactions', 'TurnoverMetabolites',
-%       'NamedReactions', 'TrackedExchanges', 'CofactorPairs', 'Currency'
+%       'NamedReactions', 'TrackedExchanges', 'CofactorPairs', 'Currency',
+%       'CompartmentNames', 'CompartmentMetabolites'
 %                    the declarations. The defaults describe human
 %                    erythrocyte metabolism (RBC-GEM identifiers); pass your
 %                    own for another reconstruction. Everything that does
@@ -68,7 +69,7 @@ function [features, info, comparison] = flux2feature(model, fluxData, flux2Compa
 
 %   Companion to the Python implementation flux2feature.py; the two agree on
 %   every shared descriptor to 1e-5 relative on a real sampled state of
-%   RBC-GEM. Version 1.0.
+%   RBC-GEM, and on a toy network with a mitochondrion. Version 1.1.
 
 % ---------------------------------------------------------------- arguments
 if nargin < 2, fluxData = []; end
@@ -158,6 +159,10 @@ opt.trackedExchanges = { ...
     'co2_e','carbon_dioxide'; 'h2o2_e','hydrogen_peroxide'; ...
     'gthrd_e','reduced_glutathione'; 'pyr_e','pyruvate'; 'cys__L_e','cysteine'; ...
     'pi_e','phosphate'};
+% compartments the compartment shares name, and the metabolites they divide
+opt.compartmentNames = {'m', 'mitochondrion'; 'c', 'cytosol'};
+opt.compartmentMetabolites = {'atp', 'nadh', 'nadph', 'co2'};
+opt.extracellular = {'e', 'b'};
 opt.cofactorPairs = { ...
     'nadph_nadp', {'nadph_c','nadp_c'}; ...
     'nadh_nad',   {'nadh_c','nad_c'}; ...
@@ -186,6 +191,8 @@ for k = 1:2:numel(args)
         case 'trackedexchanges',    opt.trackedExchanges = args{k+1};
         case 'cofactorpairs',       opt.cofactorPairs = args{k+1};
         case 'efficiencyratios',    opt.efficiencyRatios = args{k+1};
+        case 'compartmentnames',    opt.compartmentNames = args{k+1};
+        case 'compartmentmetabolites', opt.compartmentMetabolites = args{k+1};
         otherwise, error('flux2feature:option', 'unknown option "%s"', args{k});
     end
 end
@@ -202,6 +209,12 @@ for k = 1:numel(required)
 end
 model.rxns = cellstr(model.rxns(:));
 model.mets = cellstr(model.mets(:));
+if numel(unique(model.rxns)) ~= numel(model.rxns)
+    error('flux2feature:model', 'duplicate reaction identifiers');
+end
+if numel(unique(model.mets)) ~= numel(model.mets)
+    error('flux2feature:model', 'duplicate metabolite identifiers');
+end
 nRxns = numel(model.rxns);
 nMets = numel(model.mets);
 if size(model.S, 1) ~= nMets || size(model.S, 2) ~= nRxns
@@ -251,6 +264,9 @@ end
 function V = orientStates(fluxData, nRxns)
 % Return nStates x nRxns, whichever way round the caller had it.
 fluxData = double(full(fluxData));
+if any(~isfinite(fluxData(:)))
+    error('flux2feature:values', 'fluxes contain NaN or infinite values');
+end
 if isvector(fluxData)
     if numel(fluxData) ~= nRxns
         error('flux2feature:shape', '%d fluxes for %d reactions', ...
@@ -458,6 +474,70 @@ for k = 1:size(opt.cofactorPairs, 1)
         sprintf('both %s and %s', pair{1}, pair{2}), present, reason, 'conditional');
 end
 
+% -- compartments: where in the cell a metabolite is made --------------
+% Production of x in compartment K, booked by the sign of each flux, over the
+% reactions that make or use x chemically: a reaction in which x appears in
+% two compartments only moves it. Structurally unavailable, with the reason,
+% unless x lives in two intracellular compartments (shares) or the model has
+% two (flux shares). Identifiers carry the compartment as atp_m or atp[m].
+[metBase, metComp] = splitMetabolites(model.mets);
+outside = (ismember(metComp, opt.extracellular) | cellfun(@isempty, metComp))';
+inside = reshape(unique(metComp(~outside)), 1, []);
+internalColumns = find(internal);
+placed = absS(:, internalColumns) > 0;
+home = repmat({''}, 1, numel(internalColumns));
+between = false(1, numel(internalColumns));
+for j = 1:numel(internalColumns)
+    places = unique(metComp(placed(:, j) & ~outside));
+    if numel(places) == 1, home{j} = places{1}; end
+    between(j) = numel(places) >= 2;
+end
+for k = 1:numel(opt.compartmentMetabolites)
+    met = opt.compartmentMetabolites{k};
+    rows = find(strcmp(metBase(:), met) & ~outside);
+    places = reshape(unique(metComp(rows)), 1, []);
+    for c = 1:size(opt.compartmentNames, 1)
+        code = opt.compartmentNames{c, 1};
+        place = opt.compartmentNames{c, 2};
+        present = any(strcmp(places, code)) && numel(places) >= 2;
+        reason = '';
+        if ~present
+            reason = sprintf(['%s is in %d intracellular compartment(s) (%s); ' ...
+                              'needs %s and one other'], met, numel(places), ...
+                              strjoin(places, ', '), code);
+        end
+        d(end+1) = mk(sprintf('cmp_%s_made_in_%s', met, place), 'compartment', ...
+            'internal', 'ratio', ...
+            sprintf('share of the cell''s gross %s production made in the %s (stoichiometric, not net)', upper(met), place), ...
+            @(V, vals) compartmentShare(V, model.S, rows, metComp, internalColumns, code), ...
+            sprintf('%s in the %s and in another intracellular compartment', met, place), ...
+            present, reason, 'conditional');
+    end
+end
+two = numel(inside) >= 2;
+why = '';
+if ~two
+    why = sprintf('%d intracellular compartment(s) (%s); needs two', numel(inside), ...
+                  strjoin(inside, ', '));
+end
+for c = 1:size(opt.compartmentNames, 1)
+    code = opt.compartmentNames{c, 1};
+    place = opt.compartmentNames{c, 2};
+    present = two && any(strcmp(inside, code));
+    reason = why;
+    if two && ~present, reason = sprintf('no %s in this model', place); end
+    columns = internalColumns(strcmp(home, code));
+    d(end+1) = mk(['cmp_flux_in_' place], 'compartment', 'internal', 'ratio', ...
+        sprintf('share of internal flux carried by reactions inside the %s', place), ...
+        @(V, vals) safeDivide(sum(abs(V(:, columns)), 2), sum(abs(V(:, internal)), 2)), ...
+        'at least two intracellular compartments', present, reason, 'conditional');
+end
+columns = internalColumns(between);
+d(end+1) = mk('cmp_flux_between_compartments', 'compartment', 'internal', 'ratio', ...
+    'share of internal flux carried by reactions joining two intracellular compartments', ...
+    @(V, vals) safeDivide(sum(abs(V(:, columns)), 2), sum(abs(V(:, internal)), 2)), ...
+    'at least two intracellular compartments', two, why, 'conditional');
+
 % -- capacity: the only family that depends on the constraints ---------
 finite = isfinite(model.lb)' & isfinite(model.ub)' & (model.ub' > model.lb');
 for b = 1:size(blocks, 1)
@@ -535,6 +615,41 @@ d(end+1) = mk('cpl_secretion_over_uptake', 'coupling', 'combined', 'ratio', ...
     @(V, vals) safeDivide(sum(max(V(:, external), 0), 2), ...
                           sum(max(-V(:, external), 0), 2)), ...
     'an exchange reaction', any(external), reasonEx, 'conditional');
+end
+
+
+function [base, comp] = splitMetabolites(mets)
+% atp_m or atp[m] -> 'atp' and 'm'; no recognisable suffix -> the id and ''.
+base = mets(:)';
+comp = repmat({''}, 1, numel(mets));
+for k = 1:numel(mets)
+    tokens = regexp(mets{k}, '^(.*?)(?:_([A-Za-z0-9]{1,2})|\[([A-Za-z0-9]{1,2})\])$', ...
+                    'tokens', 'once');
+    if isempty(tokens), continue, end
+    base{k} = tokens{1};
+    if numel(tokens) >= 2 && ~isempty(tokens{2})
+        comp{k} = tokens{2};
+    elseif numel(tokens) >= 3
+        comp{k} = tokens{3};
+    end
+end
+end
+
+
+function share = compartmentShare(V, S, rows, metComp, internalColumns, code)
+% Chemical production of a metabolite in compartment CODE over its production
+% in every intracellular compartment; transport of the metabolite is excluded.
+Sm = S(rows, internalColumns);
+moving = full(sum(abs(Sm) > 0, 1)) >= 2;
+total = zeros(size(V, 1), 1);
+mine = zeros(size(V, 1), 1);
+for r = 1:numel(rows)
+    weights = full(Sm(r, :)) .* ~moving;
+    made = sum(max(V(:, internalColumns) .* weights, 0), 2);
+    total = total + made;
+    if strcmp(metComp{rows(r)}, code), mine = mine + made; end
+end
+share = safeDivide(mine, total);
 end
 
 

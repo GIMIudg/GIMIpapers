@@ -2,8 +2,11 @@ function test_flux2feature(modelFile, sampleFile)
 % TEST_FLUX2FEATURE  Check flux2feature, by hand and against the reference.
 %
 %   TEST_FLUX2FEATURE
-%       Runs the hand-checkable part only: a three-reaction model whose every
-%       descriptor can be worked out on paper, plus the absence rule.
+%       Runs the hand-checkable part: a three-reaction model whose every
+%       descriptor can be worked out on paper, the absence rule, and a toy
+%       network with a mitochondrion for the compartment descriptors. If the
+%       repository's data/RBC-GEM.mat and matlab/reference_state.csv are
+%       present, it also runs the reference check below on them.
 %
 %   TEST_FLUX2FEATURE(MODELFILE, SAMPLEFILE)
 %       Also compares against flux2feature_reference.csv, which holds the
@@ -23,8 +26,15 @@ function test_flux2feature(modelFile, sampleFile)
 
 fprintf('flux2feature test\n');
 toyModel();
+compartmentToy();
+here = fileparts(mfilename('fullpath'));
 if nargin >= 2
     referenceCheck(modelFile, sampleFile);
+elseif exist(fullfile(here, '..', 'data', 'RBC-GEM.mat'), 'file') == 2 ...
+        && exist(fullfile(here, 'reference_state.csv'), 'file') == 2
+    % the repository carries the model and the reference state
+    referenceCheck(fullfile(here, '..', 'data', 'RBC-GEM.mat'), ...
+                   fullfile(here, 'reference_state.csv'));
 else
     fprintf('  (pass a model and a sample archive to run the reference check)\n');
 end
@@ -84,6 +94,64 @@ end
 
 
 % ==========================================================================
+function compartmentToy()
+% Glycolysis in the cytosol; PDH and oxidative phosphorylation in the
+% mitochondrion; an ATP/ADP translocase, a pyruvate and a CO2 carrier between
+% them. The same network as python/flux2feature.py and the notebook's check.
+mets = {'glc_e','glc_c','pyr_c','pyr_m','atp_c','adp_c','atp_m','adp_m', ...
+        'nad_c','nadh_c','nad_m','nadh_m','nadp_c','nadph_c','nadp_m','nadph_m', ...
+        'co2_c','co2_m','co2_e'};
+rxns = {'EX_glc_e','GLCt','GLY','PYRt','PDH','OXPHOS','ANT','ATPM','G6PD_c', ...
+        'IDH_m','CO2t_m','CO2t_e','EX_co2_e'};
+entries = { ...
+    'EX_glc_e', {'glc_e', -1}; ...
+    'GLCt',     {'glc_e', -1; 'glc_c', 1}; ...
+    'GLY',      {'glc_c', -1; 'adp_c', -2; 'nad_c', -2; 'pyr_c', 2; 'atp_c', 2; 'nadh_c', 2}; ...
+    'PYRt',     {'pyr_c', -1; 'pyr_m', 1}; ...
+    'PDH',      {'pyr_m', -1; 'nad_m', -1; 'nadh_m', 1; 'co2_m', 1}; ...
+    'OXPHOS',   {'nadh_m', -1; 'adp_m', -3; 'nad_m', 1; 'atp_m', 3}; ...
+    'ANT',      {'atp_m', -1; 'adp_c', -1; 'atp_c', 1; 'adp_m', 1}; ...
+    'ATPM',     {'atp_c', -1; 'adp_c', 1}; ...
+    'G6PD_c',   {'glc_c', -1; 'nadp_c', -1; 'nadph_c', 1; 'co2_c', 1}; ...
+    'IDH_m',    {'nadp_m', -1; 'nadph_m', 1; 'co2_m', 1}; ...
+    'CO2t_m',   {'co2_m', -1; 'co2_c', 1}; ...
+    'CO2t_e',   {'co2_c', -1; 'co2_e', 1}; ...
+    'EX_co2_e', {'co2_e', -1}};
+S = zeros(numel(mets), numel(rxns));
+for j = 1:size(entries, 1)
+    pairs = entries{j, 2};
+    for k = 1:size(pairs, 1)
+        S(strcmp(mets, pairs{k, 1}), j) = pairs{k, 2};
+    end
+end
+model.S = sparse(S);
+model.rxns = rxns(:);
+model.mets = mets(:);
+v = [-1.5; 1.5; 1.0; 2.0; 2.0; 2.0; 5.0; 7.0; 0.5; 1.5; 3.5; 4.0; 4.0];
+f = flux2feature(model, v);
+expected = { ...
+    'cmp_atp_made_in_mitochondrion', 6/8; 'cmp_atp_made_in_cytosol', 2/8; ...
+    'cmp_nadh_made_in_mitochondrion', 2/4; 'cmp_nadh_made_in_cytosol', 2/4; ...
+    'cmp_nadph_made_in_mitochondrion', 1.5/2; 'cmp_nadph_made_in_cytosol', 0.5/2; ...
+    'cmp_co2_made_in_mitochondrion', 3.5/4; 'cmp_co2_made_in_cytosol', 0.5/4; ...
+    'cmp_flux_in_mitochondrion', 5.5/30; 'cmp_flux_in_cytosol', 14/30; ...
+    'cmp_flux_between_compartments', 10.5/30};
+for k = 1:size(expected, 1)
+    check(isfield(f, expected{k, 1}), [expected{k, 1} ' computed']);
+    check(abs(f.(expected{k, 1}) - expected{k, 2}) < 1e-12, expected{k, 1});
+end
+% a model without organelles declares them and says why it cannot compute them
+one.S = sparse([1 -1 0; 0 1 -1]);
+one.rxns = {'EX_a'; 'R1'; 'EX_b'};
+one.mets = {'a_c'; 'b_c'};
+info = flux2feature(one);
+idx = find(strcmp({info.name}, 'cmp_flux_between_compartments'), 1);
+check(~isempty(idx) && ~info(idx).computable, 'compartment flux unavailable without organelles');
+fprintf('  compartments: %d descriptors, values as computed by hand\n', size(expected, 1));
+end
+
+
+% ==========================================================================
 function referenceCheck(modelFile, sampleFile)
 here = fileparts(mfilename('fullpath'));
 referenceFile = fullfile(here, 'flux2feature_reference.csv');
@@ -139,6 +207,25 @@ end
 
 
 function v = loadFirstState(sampleFile, nRxns)
+if endsWith(sampleFile, '.csv')
+    % reaction,flux: the reference state the repository carries
+    handle = fopen(sampleFile, 'r');
+    cleanup = onCleanup(@() fclose(handle));
+    fgetl(handle);
+    v = [];
+    while true
+        line = fgetl(handle);
+        if ~ischar(line), break, end
+        parts = strsplit(strtrim(line), ',');
+        v(end+1, 1) = str2double(parts{end});                           %#ok<AGROW>
+    end
+    if numel(v) ~= nRxns
+        error('flux2feature:samples', '%d fluxes in %s for %d reactions', ...
+            numel(v), sampleFile, nRxns);
+    end
+    fprintf('  reference state: %s\n', sampleFile);
+    return
+end
 raw = load(sampleFile);
 names = fieldnames(raw);
 v = [];

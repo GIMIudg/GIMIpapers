@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the article and the archived release."
+title: "flux2features: an auditable representation of sampled metabolic states"
+type: software
+authors:
+  - family-names: Preciat
+    given-names: Germán
+    affiliation: "Universidad de Guadalajara, CUCEI, Departamento de Bioingeniería Traslacional"
+    email: german.preciat@academicos.udg.mx
+  - family-names: Sotelo Rodriguez
+    given-names: Ramyet
+    affiliation: "Universidad de Guadalajara, CUCEI, Departamento de Bioingeniería Traslacional"
+  - family-names: Gómez Márquez
+    given-names: Carolina Elizabeth
+    affiliation: "Universidad de Guadalajara, CUCEI, Biodigital Innovation Lab"
+repository-code: "https://github.com/GIMIudg/GIMIpapers/tree/main/flux2features"
+identifiers:
+  - type: url
+    value: "https://zenodo.org/records/19339596"
+    description: "Zenodo archive of GIMIpapers (update to the release that accompanies the article)"
+license: MIT
+keywords:
+  - flux sampling
+  - genome-scale metabolic models
+  - interpretable features
+  - G6PD deficiency
+references:
+  - type: article
+    title: "RBC-GEM: a genome-scale metabolic model for systems biology of the human red blood cell"
+    authors:
+      - family-names: Haiman
+        given-names: Zachary B.
+      - family-names: Key
+        given-names: Alicia
+      - family-names: D'Alessandro
+        given-names: Angelo
+      - family-names: Palsson
+        given-names: Bernhard O.
+    journal: "PLoS Computational Biology"
+    year: 2025
+    volume: 21
+    issue: 3
+    start: e1012109
+    doi: 10.1371/journal.pcbi.1012109

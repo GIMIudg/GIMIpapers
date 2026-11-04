@@ -1,0 +1,20 @@
+# The Python environment of the analysis notebook and of python/flux2feature.py.
+#   conda env create -f environment.yml && conda activate flux2features
+# The versions are those of the run reported in the manuscript; any recent
+# release of the same packages is expected to work (Python 3.11 or later).
+name: flux2features
+channels:
+  - conda-forge
+dependencies:
+  - python>=3.11
+  - numpy>=1.26
+  - scipy>=1.11
+  - pandas>=2.1
+  - scikit-learn>=1.4
+  - matplotlib>=3.8
+  - openpyxl>=3.1
+  - jupyterlab
+  - pandoc>=3.1          # only to build the manuscript (stage 31)
+# Versions of the reported run: Python 3.13.16, NumPy 2.5.3, SciPy 1.18.1,
+# pandas 3.0.5, scikit-learn 1.9.1, matplotlib 3.11.2, openpyxl 3.1.5, pandoc 3.1.3.
+# Sampling (matlab/): MATLAB with the COBRA Toolbox v3 and Gurobi and/or MOSEK.
