@@ -36,7 +36,7 @@
 %      at least 95% of it (the healthy distribution of G6PDH2 reaches ~900 in
 %      both reconstructions, so every imposed bound binds). The peroxide
 %      bound restricts secretion, which no sampled state approaches; it is
-%      the design's negative control and is not checked here.
+%      the design's inactive-bound control and is not checked here.
 %
 % Rounding the polytope (maximum-volume ellipsoid) solves linear programs to
 % find an interior starting point. At G6PDH2 = 0.28 in Thermo that point fell

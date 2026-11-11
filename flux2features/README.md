@@ -1,18 +1,19 @@
 # flux2features
 
-Code for *An auditable representation of sampled metabolic states: compression,
-parsimony and comparability across reconstructions* (Preciat, Sotelo Rodriguez
+Code for *From metabolic fluxes to functional features: an interpretable
+representation of constraint-based model states* (Preciat, Sotelo Rodriguez
 and Gómez Márquez).
 
 A flux vector of a constraint-based model, whether a flux balance optimum, a
 sampled state or fluxes estimated from data, is a list of thousands of reaction
 rates. This repository maps any such vector $v$ of a reconstruction $M$ to
 $\Phi_M(v)$, a vector of declared, interpretable descriptors (pathway activity,
-metabolite turnover, cofactor allocation and budgets, production by compartment,
-capacity use, exchange and the coupling between inside and boundary), each with
-its units, its requirements and the rule for when the reconstruction lacks
-them (structurally unavailable, never a zero). The mapping needs a flux vector,
-not a sampler; the study evaluates it on states sampled from the human red blood
+metabolite turnover, cofactor budgets, sources and allocation, oxidative defence,
+production by compartment, elemental and amino-acid exchange, carbon and
+nitrogen sources, capacity use and the coupling between inside and boundary),
+each with its units, its requirements and the rule for when the reconstruction
+lacks them (structurally unavailable, never a zero). The mapping needs only a
+flux vector; the study evaluates it on states sampled from the human red blood
 cell reconstruction RBC-GEM and from its thermodynamically flux-consistent
 subset.
 
@@ -26,11 +27,11 @@ archived at Zenodo ([doi:10.5281/zenodo.19339596](https://doi.org/10.5281/zenodo
 | path | what it is |
 |---|---|
 | `matlab/generateModelsAndSamples_flux2features.m` | builds both reconstructions, imposes the 3 × 3 design plus the reference, and samples every condition with three CHRR chains, checking every perturbed chain against its bound before saving it |
+| `matlab/sampleObjectiveSensitivity_flux2features.m` | samples the reference and G6PDH2 0.10 of Original again with NaKt held at no less than 95% and 90% of its maximum (three chains each, same procedure); the notebook reads them in stage 08c and the manuscript reports them once they exist |
 | `matlab/flux2feature.m` | the representation packaged for reuse, base MATLAB, no toolbox |
-| `python/flux2feature.py` | the same tool in Python (NumPy only); the notebook checks it against its engine (stage 28) |
-| `python/test_flux2feature.py`, `matlab/test_flux2feature.m` | the tests: every descriptor of a three-reaction model and of a two-compartment network worked by hand, the absence rule, and a real state of RBC-GEM against reference values |
+| `python/flux2feature.py` | the same tool in Python (NumPy only), plus the elemental, source-diversity, amino-acid, oxidative-defence and conversion families, which the MATLAB version does not have yet; the notebook checks it against its engine (stage 28) |
+| `python/test_flux2feature.py`, `matlab/test_flux2feature.m` | the tests: every descriptor of a three-reaction model, of a two-compartment network and of a toy exchanging glucose, glutamine, lactate and CO2 worked by hand, the absence rule, and a real state of RBC-GEM against reference values |
 | `matlab/reference_state.csv`, `matlab/flux2feature_reference.csv` | that state (reaction, flux) and its descriptors, written by the notebook after checking the tool against its engine to 1e-5 |
-| `validation/` | an independent validation of both implementations: the same small models and states mapped in Python and MATLAB, properties any correct implementation must have, and a descriptor-by-descriptor cross-check (see `validation/README.md`) |
 | `notebook/metabolic_flux_phenotyping.ipynb` | the whole analysis, in order: the integrity of every chain, the descriptors and their quality control, the response to the gradient, raw fluxes against the representation, parsimony, transfer between reconstructions, secondary validations, the audit, every figure (shown below the analysis it comes from) and supplementary table, and the build of the manuscript |
 | `environment.yml`, `CITATION.cff` | the Python environment, and how to cite this code |
 | `data/RBC-GEM.mat` | RBC-GEM v1.3.0 as used ([commit 43fd381](https://github.com/z-haiman/RBC-GEM/commit/43fd381d9eb8a8a4079629012362312960e1c009); MD5 `294801a126d7dd89977ee7c3061de4b5`). Cite Haiman ZB, Key A, D'Alessandro A, Palsson BO. *PLoS Comput Biol* 2025;21(3):e1012109 |
@@ -41,7 +42,8 @@ archived at Zenodo ([doi:10.5281/zenodo.19339596](https://doi.org/10.5281/zenodo
 from flux2feature import Model, flux2feature, audit
 model = Model(S, rxns, mets, lb, ub, subsystems)   # or Model.from_cobra(cobra_model)
 audit(model)                 # every declared descriptor, computable or not, and why
-phi = flux2feature(model, v) # v: one flux vector, or a states-by-reactions matrix
+phi = flux2feature(model, v) # v: one flux vector, or a states-by-reactions matrix;
+                             # always all 179 descriptors, NaN where the model cannot support one
 ```
 
 ```matlab

@@ -2,8 +2,10 @@
 
     python test_flux2feature.py          # or: pytest test_flux2feature.py
 
-1. The self-test of ``flux2feature.py``: a three-reaction model and a toy network
-   with a mitochondrion, every value worked out on paper, and the absence rule.
+1. The self-test of ``flux2feature.py``: a three-reaction model, a toy network
+   with a mitochondrion and a toy exchanging glucose, glutamine, lactate and CO2
+   with peroxide made and removed two ways, every value worked out on paper,
+   and the absence rule.
 2. The reference check: the first retained state of the healthy reference chain
    of RBC-GEM (``matlab/reference_state.csv``) mapped by this file must give the
    values in ``matlab/flux2feature_reference.csv`` to 1e-5 relative. The notebook
@@ -36,7 +38,9 @@ def _load_model(path: Path) -> "f2f.Model":
     raw = loadmat(str(path), squeeze_me=True, struct_as_record=False)
     model = next(v for k, v in raw.items() if not k.startswith("__"))
     return f2f.Model(model.S, list(model.rxns), list(model.mets), model.lb, model.ub,
-                     list(model.subSystems))
+                     list(model.subSystems),
+                     formulas=list(getattr(model, "metFormulas", [""] * len(model.mets))),
+                     met_names=list(getattr(model, "metNames", [""] * len(model.mets))))
 
 
 def test_reference_state():

@@ -1,5 +1,0 @@
-metabolite,reaction,coefficient
-a_c,EX_a,1.0
-a_c,R1,-1.0
-b_c,R1,1.0
-b_c,EX_b,-1.0

@@ -99,6 +99,9 @@ for i = 1:numel(neurons)
     exoFile = fullfile(omicsDir, ['exometabolomicData_' neuron 'Neuron.txt']);
     if isfile(exoFile)
         specificData.exoMet = readtable(exoFile, 'TextType', 'string');
+        for v = {'rxns', 'mets', 'metName', 'platform'}                % text columns as cell arrays
+            specificData.exoMet.(v{1}) = cellstr(specificData.exoMet.(v{1}));
+        end
         fprintf('exometabolomic data: %d exchange rates\n', height(specificData.exoMet));
     else
         fprintf('no exometabolomic data for this neuron\n');

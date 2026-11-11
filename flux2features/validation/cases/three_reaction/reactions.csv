@@ -1,4 +1,0 @@
-reaction,lb,ub,subsystem
-EX_a,-10.0,0.0,
-R1,0.0,10.0,Glycolysis / Gluconeogenesis
-EX_b,0.0,10.0,

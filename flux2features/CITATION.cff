@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this code, please cite the article and the archived release."
-title: "flux2features: an auditable representation of sampled metabolic states"
+title: "flux2features: from metabolic fluxes to functional features"
 type: software
 authors:
   - family-names: Preciat

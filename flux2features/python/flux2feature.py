@@ -36,7 +36,7 @@ __all__ = ["Model", "Descriptor", "audit", "flux2feature", "registry",
            "PATHWAYS", "TURNOVER_METABOLITES", "NAMED_REACTIONS",
            "TRACKED_EXCHANGES", "COFACTOR_PAIRS"]
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 #: Below this, a flux counts as zero. Raise it if your model is in different units.
 FLUX_TOLERANCE = 1e-6
@@ -119,6 +119,51 @@ def _split_metabolite(identifier: str) -> tuple[str, str]:
     return match.group(1), match.group(2) or match.group(3)
 
 
+
+_ELEMENT = re.compile(r"([A-Z][a-z]?)(\d*(?:\.\d+)?)")
+
+
+def _element_count(formula, element: str) -> float:
+    """Atoms of ``element`` in a formula such as ``C6H12O6``; 0 if absent or unreadable."""
+    if not isinstance(formula, str) or not formula:
+        return 0.0
+    return sum(float(c) if c else 1.0 for symbol, c in _ELEMENT.findall(formula) if symbol == element)
+
+
+#: The proteinogenic amino acids: canonical name -> identifier stems (BiGG, VMH).
+AMINO_ACIDS = {
+    "alanine": ("ala__L", "ala_L"), "arginine": ("arg__L", "arg_L"),
+    "asparagine": ("asn__L", "asn_L"), "aspartate": ("asp__L", "asp_L"),
+    "cysteine": ("cys__L", "cys_L"), "glutamine": ("gln__L", "gln_L"),
+    "glutamate": ("glu__L", "glu_L"), "glycine": ("gly",),
+    "histidine": ("his__L", "his_L"), "isoleucine": ("ile__L", "ile_L"),
+    "leucine": ("leu__L", "leu_L"), "lysine": ("lys__L", "lys_L"),
+    "methionine": ("met__L", "met_L"), "phenylalanine": ("phe__L", "phe_L"),
+    "proline": ("pro__L", "pro_L"), "serine": ("ser__L", "ser_L"),
+    "threonine": ("thr__L", "thr_L"), "tryptophan": ("trp__L", "trp_L"),
+    "tyrosine": ("tyr__L", "tyr_L"), "valine": ("val__L", "val_L"),
+}
+ESSENTIAL_AMINO_ACIDS = ("histidine", "isoleucine", "leucine", "lysine", "methionine",
+                         "phenylalanine", "threonine", "tryptophan", "valine")
+#: amino acids already reported one by one as tracked exchanges
+_TRACKED_AMINO_ACIDS = ("cysteine", "glycine", "glutamate")
+_AA_SYNONYMS = {"aspartic acid": "aspartate", "glutamic acid": "glutamate",
+                "l-aspartate": "aspartate", "l-glutamate": "glutamate"}
+
+
+def _amino_acid(identifier: str, name: str = "") -> str | None:
+    """Canonical amino-acid name of a metabolite, by identifier and then by name; D forms excluded."""
+    stem, _ = _split_metabolite(identifier)
+    for canonical, stems in AMINO_ACIDS.items():
+        if stem in stems:
+            return canonical
+    text = re.sub(r"\(.*?\)", "", str(name).strip().lower()).strip()
+    if not text or text.startswith("d-"):
+        return None
+    text = _AA_SYNONYMS.get(text, text)
+    text = text[2:] if text.startswith("l-") else text
+    return text if text in AMINO_ACIDS else None
+
 # --------------------------------------------------------------------------
 # the model, in the least that is needed
 # --------------------------------------------------------------------------
@@ -138,6 +183,8 @@ class Model:
     ub: np.ndarray | None = None
     subsystems: list[str] | None = None
     exchange: np.ndarray | None = None          # bool per reaction
+    formulas: list[str] | None = None           # metabolite formulas, for the element families
+    met_names: list[str] | None = None          # metabolite names, to recognise amino acids
 
     def __post_init__(self) -> None:
         self.S = np.asarray(getattr(self.S, "toarray", lambda: self.S)(), dtype=float)
@@ -151,6 +198,10 @@ class Model:
         self.ub = np.full(n, np.inf) if self.ub is None else np.asarray(self.ub, float)
         self.subsystems = ([""] * n if self.subsystems is None
                            else [str(s) for s in self.subsystems])
+        m = len(self.mets)
+        self.formulas = [""] * m if self.formulas is None else [
+            f if isinstance(f, str) else "" for f in self.formulas]
+        self.met_names = [""] * m if self.met_names is None else [str(x) for x in self.met_names]
         if self.exchange is None:
             # A boundary reaction is one that exchanges mass with the outside.
             # Where identifiers follow the BiGG convention that is exactly the
@@ -185,7 +236,9 @@ class Model:
         return cls(S, rxns, mets,
                    [r.lower_bound for r in model.reactions],
                    [r.upper_bound for r in model.reactions],
-                   [getattr(r, "subsystem", "") for r in model.reactions])
+                   [getattr(r, "subsystem", "") for r in model.reactions],
+                   formulas=[getattr(m, "formula", "") or "" for m in model.metabolites],
+                   met_names=[getattr(m, "name", "") or "" for m in model.metabolites])
 
     def reaction(self, identifier: str) -> int | None:
         return self._rxn_index.get(identifier)
@@ -465,6 +518,261 @@ def registry(model: Model, *, pathways=None, pathway_reactions=None,
             requires="at least two intracellular compartments", computable=two,
             reason=why, scope="conditional")
 
+
+    # -- elements, amino acids, oxidative defence and conversion -----------
+    # The export of an exchanged metabolite is read from the sign of its
+    # coefficient, so it is positive out of the cell whichever way the exchange
+    # is written. Shares and ratios are NaN where their denominator is zero.
+    ext_cols = np.array([c for c in np.flatnonzero(external)
+                         if (np.abs(model.S[:, c]) > 0).sum() == 1], dtype=int)
+    ext_row = np.array([np.flatnonzero(np.abs(model.S[:, c]) > 0)[0] for c in ext_cols], dtype=int)
+    ext_sign = -np.sign(model.S[ext_row, ext_cols]) if ext_cols.size else np.zeros(0)
+    ext_stem = np.array([base[r] for r in ext_row], dtype=object)
+    atoms = {e: np.array([_element_count(model.formulas[r], e) for r in ext_row])
+             for e in ("C", "N", "S", "P")}
+
+    def export(V):
+        return V[:, ext_cols] * ext_sign
+
+    def carbon_parts(V, uptake=True):
+        x = export(V)
+        return (np.maximum(-x, 0) if uptake else np.maximum(x, 0)) * atoms["C"]
+
+    def where(*stems):
+        return np.flatnonzero(np.isin(ext_stem, stems))
+
+    for e, label in (("N", "nitrogen"), ("S", "sulfur"), ("P", "phosphorus")):
+        present = bool((atoms[e] > 0).any())
+        for side in ("uptake", "secretion"):
+            declare(f"elem_{e.lower()}_{side}", "elemental", "external", "flux",
+                    f"{label} atoms {'taken up' if side == 'uptake' else 'secreted'} per unit "
+                    f"time, from the formulas of exchanged metabolites",
+                    (lambda V, a=atoms[e], up=side == "uptake":
+                     (np.maximum(-export(V), 0) if up else np.maximum(export(V), 0)) @ a)
+                    if present else None,
+                    requires=f"an exchanged metabolite with {label} in its formula",
+                    computable=present,
+                    reason="" if present else f"no exchanged metabolite contains {label}",
+                    scope="conditional")
+    has_c, has_n = bool((atoms["C"] > 0).any()), bool((atoms["N"] > 0).any())
+    amino = np.array([_amino_acid(model.mets[r], model.met_names[r]) for r in ext_row], dtype=object)
+    aa_cols = np.flatnonzero(amino != None)                                  # noqa: E711
+    shares = (
+        ("elem_c_from_glucose", "share of carbon uptake supplied by glucose",
+         where("glc__D", "glc_D"), True, "C", "a glucose exchange"),
+        ("elem_c_from_lactate_pyruvate", "share of carbon uptake supplied by lactate and pyruvate",
+         where("lac__L", "lac_L", "pyr"), True, "C", "a lactate or pyruvate exchange"),
+        ("elem_c_from_amino_acids", "share of carbon uptake supplied by amino acids",
+         aa_cols, True, "C", "an amino-acid exchange"),
+        ("elem_c_to_lactate", "share of carbon secretion leaving as lactate",
+         where("lac__L", "lac_L"), False, "C", "a lactate exchange"),
+        ("elem_c_to_co2", "share of carbon secretion leaving as CO2",
+         where("co2"), False, "C", "a CO2 exchange"),
+        ("elem_n_from_amino_acids", "share of nitrogen uptake supplied by amino acids",
+         aa_cols, True, "N", "an amino-acid exchange"))
+    for name, text, cols, up, e, needs in shares:
+        present = bool((atoms[e] > 0).any()) and cols.size > 0
+        declare(name, "elemental", "external", "ratio", text,
+                (lambda V, c=cols, up=up, a=atoms[e]: (lambda parts: _safe(
+                    parts[:, c].sum(axis=1), parts.sum(axis=1)))(
+                    (np.maximum(-export(V), 0) if up else np.maximum(export(V), 0)) * a))
+                if present else None,
+                requires=needs, computable=present,
+                reason="" if present else f"no {needs[2:] if needs.startswith('a ') else needs}",
+                scope="conditional")
+
+    def diversity(parts, kind):
+        total = parts.sum(axis=1, keepdims=True)
+        with np.errstate(invalid="ignore", divide="ignore"):
+            f = np.where(total > 0, parts / total, np.nan)
+            logs = np.where(f > 0, np.log(np.where(f > 0, f, 1.0)), 0.0)
+            value = {"entropy": -(np.nan_to_num(f) * logs).sum(axis=1),
+                     "effective": 1.0 / np.nansum(f ** 2, axis=1),
+                     "dominant": np.nanmax(np.nan_to_num(f), axis=1)}[kind]
+        value = np.asarray(value, dtype=float)
+        value[total.ravel() <= 0] = np.nan
+        return value
+
+    for e, present in (("c", has_c), ("n", has_n)):
+        kinds = (("source_entropy", "entropy", "nats", "Shannon entropy of the {} sources taken up"),
+                 ("effective_sources", "effective", "dimensionless", "effective number of {} sources"))
+        if e == "c":
+            kinds += (("dominant_source", "dominant", "ratio",
+                       "share of {} uptake from the largest single source"),)
+        label = "carbon" if e == "c" else "nitrogen"
+        for suffix, kind, units, text in kinds:
+            declare(f"div_{e}_{suffix}", "source_diversity", "external", units, text.format(label),
+                    (lambda V, a=atoms[e.upper()], k=kind:
+                     diversity(np.maximum(-export(V), 0) * a, k)) if present else None,
+                    requires=f"an exchanged metabolite with {label} in its formula",
+                    computable=present,
+                    reason="" if present else f"no exchanged metabolite contains {label}",
+                    scope="conditional")
+
+    by_acid = {}
+    for k in aa_cols:
+        by_acid.setdefault(amino[k], []).append(int(k))
+    for acid in AMINO_ACIDS:
+        if acid in _TRACKED_AMINO_ACIDS:
+            continue
+        present = acid in by_acid
+        declare(f"aa_{acid}_net_uptake", "amino_acid", "external", "flux",
+                f"net uptake of {acid} (uptake minus secretion)",
+                (lambda V, c=by_acid.get(acid, []): -export(V)[:, c].sum(axis=1))
+                if present else None,
+                requires=f"an exchange for {acid}", computable=present,
+                reason="" if present else f"no {acid} exchange", scope="conditional")
+
+    def acid_matrix(V):
+        x = export(V)
+        return np.column_stack([x[:, by_acid[a]].sum(axis=1) for a in by_acid])
+
+    found = bool(by_acid)
+    essential = [k for k, a in enumerate(by_acid) if a in ESSENTIAL_AMINO_ACIDS]
+    for name, units, text, compute in (
+            ("aa_total_uptake", "flux", "total uptake of amino acids",
+             lambda V: np.maximum(-acid_matrix(V), 0).sum(axis=1)),
+            ("aa_total_secretion", "flux", "total secretion of amino acids",
+             lambda V: np.maximum(acid_matrix(V), 0).sum(axis=1)),
+            ("aa_essential_uptake", "flux", "uptake of the nine essential amino acids",
+             lambda V: np.maximum(-acid_matrix(V), 0)[:, essential].sum(axis=1)),
+            ("aa_uptake_entropy", "nats", "Shannon entropy of the amino-acid uptake profile",
+             lambda V: diversity(np.maximum(-acid_matrix(V), 0), "entropy")),
+            ("aa_n_taken_up", "count", "number of amino acids taken up",
+             lambda V: (np.maximum(-acid_matrix(V), 0) > tolerance).sum(axis=1).astype(float))):
+        present = found and (name != "aa_essential_uptake" or bool(essential))
+        declare(name, "amino_acid", "external", units, text, compute if present else None,
+                requires="an amino-acid exchange recognised by identifier or name",
+                computable=present,
+                reason="" if present else "no recognised amino-acid exchange",
+                scope="conditional")
+
+    # carriers: rows of every intracellular compartment, moves excluded
+    int_cols = np.flatnonzero(internal)
+    stems_all = base
+
+    def carrier(*stems):
+        rows = [r for r in range(len(model.mets)) if stems_all[r] in stems
+                and comp[r] not in EXTRACELLULAR]
+        if not rows:
+            return None
+        coefficient = model.S[np.ix_(rows, int_cols)].sum(axis=0)
+        every = model.S[np.ix_([r for r in range(len(model.mets)) if stems_all[r] in stems],
+                               int_cols)]
+        coefficient = np.where((every > 0).any(axis=0) & (every < 0).any(axis=0), 0.0, coefficient)
+        return coefficient
+
+    def made(V, c):
+        return np.maximum(V[:, int_cols] * c, 0)
+
+    def used(V, c):
+        return np.maximum(-V[:, int_cols] * c, 0)
+
+    def signature(consumes, produces=(), only=False, partner=""):
+        hits = []
+        for k, j in enumerate(int_cols):
+            column = model.S[:, j]
+            taken = {stems_all[r] for r in np.flatnonzero(column < 0)}
+            given = {stems_all[r] for r in np.flatnonzero(column > 0)}
+            if not set(consumes) <= taken or not set(produces) <= given:
+                continue
+            if only and taken - set(consumes) - {"h"}:
+                continue
+            if partner and not any(t.startswith(partner) for t in taken):
+                continue
+            hits.append(k)
+        return np.array(hits, dtype=int)
+
+    h2o2, o2s, nadph, atp = carrier("h2o2"), carrier("o2s"), carrier("nadph"), carrier("atp")
+    live = lambda c: c is not None and bool(np.any(c))
+    catalase = signature(("h2o2",), ("o2",), only=True)
+    gpx = signature(("h2o2", "gthrd"), ("gthox",))
+    prdx = signature(("h2o2",), partner="prdx")
+    sod = signature(("o2s",), ("h2o2",))
+    gr_nadph = signature(("gthox", "nadph"), ("gthrd",))
+    gr = np.union1d(gr_nadph, signature(("gthox", "nadh"), ("gthrd",))).astype(int)
+    defence = (
+        ("ros_h2o2_production", "flux", "gross internal production of hydrogen peroxide",
+         live(h2o2), "no peroxide", lambda V: made(V, h2o2).sum(axis=1)),
+        ("ros_h2o2_removal", "flux", "gross internal removal of hydrogen peroxide",
+         live(h2o2), "no peroxide", lambda V: used(V, h2o2).sum(axis=1)),
+        ("ros_h2o2_removal_per_production", "ratio",
+         "model-based peroxide removal-to-production ratio (above 1 when peroxide is taken up)",
+         live(h2o2), "no peroxide",
+         lambda V: _safe(used(V, h2o2).sum(axis=1), made(V, h2o2).sum(axis=1))),
+        ("ros_h2o2_removed_by_catalase", "ratio", "share of peroxide removal by catalase",
+         live(h2o2) and catalase.size > 0, "no catalase signature (2 H2O2 -> O2)",
+         lambda V: _safe(used(V, h2o2)[:, catalase].sum(axis=1), used(V, h2o2).sum(axis=1))),
+        ("ros_h2o2_removed_by_glutathione_peroxidase", "ratio",
+         "share of peroxide removal by glutathione peroxidase",
+         live(h2o2) and gpx.size > 0, "no glutathione peroxidase signature",
+         lambda V: _safe(used(V, h2o2)[:, gpx].sum(axis=1), used(V, h2o2).sum(axis=1))),
+        ("ros_h2o2_removed_by_peroxiredoxin", "ratio", "share of peroxide removal by peroxiredoxins",
+         live(h2o2) and prdx.size > 0, "no peroxiredoxin signature",
+         lambda V: _safe(used(V, h2o2)[:, prdx].sum(axis=1), used(V, h2o2).sum(axis=1))),
+        ("ros_superoxide_production", "flux", "gross internal production of superoxide",
+         live(o2s), "no superoxide", lambda V: made(V, o2s).sum(axis=1)),
+        ("ros_superoxide_dismutated", "ratio", "share of superoxide removal by superoxide dismutase",
+         live(o2s) and sod.size > 0, "no superoxide dismutase signature",
+         lambda V: _safe(used(V, o2s)[:, sod].sum(axis=1), used(V, o2s).sum(axis=1))),
+        ("ros_glutathione_regeneration_cover", "ratio",
+         "NADPH produced per NADPH consumed by glutathione reductases",
+         live(nadph) and gr_nadph.size > 0, "no NADPH-dependent glutathione reductase",
+         lambda V: _safe(made(V, nadph).sum(axis=1), used(V, nadph)[:, gr_nadph].sum(axis=1))),
+        ("ros_glutathione_cycle_closure", "ratio",
+         "glutathione disulfide reduced by glutathione reductases per disulfide formed by peroxide removal",
+         gr.size > 0 and gpx.size > 0, "no glutathione reductase or peroxidase",
+         lambda V: _safe(np.maximum(V[:, int_cols[gr]], 0).sum(axis=1),
+                         np.maximum(V[:, int_cols[gpx]], 0).sum(axis=1))))
+    for name, units, text, present, why, compute in defence:
+        declare(name, "oxidative_defense", "internal", units, text, compute if present else None,
+                requires="peroxide or superoxide and the named signature", computable=present,
+                reason="" if present else why, scope="conditional")
+
+    # -- budget: the two NADPH budget descriptors of the paper's panel -------
+    # NADPH consumed by glutathione reductases (the signature above), and NADPH made by
+    # the oxidative branch (the named G6PDH2 and GND) per NADPH so consumed.
+    columns = {model.reaction(named_reactions.get(k, "")) for k in ("g6pd", "gnd")}
+    position = {j: k for k, j in enumerate(int_cols)}
+    oxidative = np.array(sorted(position[j] for j in columns if j is not None and j in position),
+                         dtype=int)
+    branch = oxidative.size == 2
+    budget = (
+        ("bud_nadph_to_glutathione_reduction",
+         "share of NADPH consumption used to reduce glutathione disulfide",
+         live(nadph) and gr.size > 0, "no NADPH or no glutathione reductase signature",
+         lambda V: _safe(used(V, nadph)[:, gr].sum(axis=1), used(V, nadph).sum(axis=1))),
+        ("bud_oxppp_cover_of_glutathione_reduction",
+         "NADPH made by the oxidative branch per NADPH used to reduce glutathione",
+         live(nadph) and gr.size > 0 and branch,
+         "no NADPH, no glutathione reductase signature, or G6PDH2 and GND not both present",
+         lambda V: _safe(made(V, nadph)[:, oxidative].sum(axis=1),
+                         used(V, nadph)[:, gr].sum(axis=1))))
+    for name, text, present, why, compute in budget:
+        declare(name, "budget", "internal", "ratio", text, compute if present else None,
+                requires="NADPH, the glutathione-reductase signature and the named reactions",
+                computable=present, reason="" if present else why, scope="conditional")
+
+    glucose, lactate, co2 = where("glc__D", "glc_D"), where("lac__L", "lac_L"), where("co2")
+    conversion = (
+        ("conv_atp_per_carbon", "gross ATP production per carbon atom taken up",
+         has_c and atp is not None, "no ATP or no carbon exchange",
+         lambda V: _safe(made(V, atp).sum(axis=1), carbon_parts(V).sum(axis=1))),
+        ("conv_nadph_per_carbon", "gross NADPH production per carbon atom taken up",
+         has_c and nadph is not None, "no NADPH or no carbon exchange",
+         lambda V: _safe(made(V, nadph).sum(axis=1), carbon_parts(V).sum(axis=1))),
+        ("conv_lactate_per_glucose_carbon", "lactate carbon secreted per glucose carbon taken up",
+         glucose.size > 0 and lactate.size > 0, "no glucose or lactate exchange",
+         lambda V: _safe(carbon_parts(V, False)[:, lactate].sum(axis=1),
+                         carbon_parts(V)[:, glucose].sum(axis=1))),
+        ("conv_co2_per_carbon", "CO2 carbon released per carbon atom taken up",
+         has_c and co2.size > 0, "no CO2 exchange",
+         lambda V: _safe(carbon_parts(V, False)[:, co2].sum(axis=1), carbon_parts(V).sum(axis=1))))
+    for name, text, present, why, compute in conversion:
+        declare(name, "conversion", "combined", "ratio", text, compute if present else None,
+                requires="metabolite formulas, the carrier and the named exchanges",
+                computable=present, reason="" if present else why, scope="conditional")
+
     # -- capacity: the only family that depends on the constraints ---------
     finite = np.isfinite(model.lb) & np.isfinite(model.ub) & (model.ub > model.lb)
     for block, mask, tag in (("internal", internal, "int"), ("external", external, "ext")):
@@ -596,19 +904,19 @@ def audit(model: Model, **declaration) -> list[dict]:
             for d in registry(model, **declaration)]
 
 
-def flux2feature(model: Model, fluxes, which="computable", *, as_frame=False,
+def flux2feature(model: Model, fluxes, which="all", *, as_frame=False,
                  **declaration):
     """Descriptors of one flux vector, or of a matrix of them.
 
     ``fluxes``   a vector of length ``len(model.rxns)``, or a matrix with one
                  state per row (or per column, as COBRA samplers return them).
                  Non-finite values are refused.
-    ``which``    ``"computable"`` returns only the descriptors this model
-                 supports; ``"all"`` returns every declared descriptor, with
-                 NaN where the model cannot support it — use this when you
-                 intend to compare two reconstructions, so that the columns
-                 line up and an absence stays visibly an absence;
-                 a list of names returns exactly those.
+    ``which``    ``"all"`` (the default) returns every declared descriptor, with
+                 NaN where the model cannot support it, so that every flux
+                 vector of every reconstruction maps to the same coordinates
+                 and an absence stays visibly an absence; ``"computable"``
+                 returns only the descriptors this model supports; a list of
+                 names returns exactly those.
     ``as_frame`` return a pandas DataFrame instead of a dict of arrays.
 
     A descriptor that cannot be computed returns NaN. It never returns 0.
@@ -692,6 +1000,53 @@ COMPARTMENT_TOY_EXPECTED = {
 }
 
 
+def _functional_toy():
+    """Glucose and glutamine in, lactate and CO2 out; peroxide made and removed two ways.
+
+    Exchanges: glucose 2 in (12 C), glutamine 1 in (5 C, 2 N), lactate 3 out (9 C),
+    CO2 8 out (8 C). Peroxide: 3 made by an oxidase, 2 removed by catalase (one
+    turn) and 2 by glutathione peroxidase (two turns); glutathione reductase
+    reduces 2 disulfide with 2 NADPH, G6PD and GND make 5 and 1 NADPH, and an
+    oxidase uses the other 2 NADPH (4 used in all). The stoichiometry
+    is not balanced: the descriptors read only the rows they name.
+    """
+    mets = ["glc__D_e", "gln__L_e", "lac__L_e", "co2_e", "h2o2_c", "o2_c", "h2o_c",
+            "gthrd_c", "gthox_c", "nadph_c", "nadp_c"]
+    formulas = ["C6H12O6", "C5H10N2O3", "C3H5O3", "CO2", "H2O2", "O2", "H2O",
+                "C10H16N3O6S", "C20H30N6O12S2", "C21H26N7O17P3", "C21H25N7O17P3"]
+    reactions = {
+        "EX_glc__D_e": ({"glc__D_e": -1}, -2.0), "EX_gln__L_e": ({"gln__L_e": -1}, -1.0),
+        "EX_lac__L_e": ({"lac__L_e": -1}, 3.0), "EX_co2_e": ({"co2_e": -1}, 8.0),
+        "OXIDASE": ({"o2_c": -1, "h2o2_c": 1}, 3.0),
+        "CAT": ({"h2o2_c": -2, "o2_c": 1, "h2o_c": 2}, 1.0),
+        "GTHP": ({"h2o2_c": -1, "gthrd_c": -2, "gthox_c": 1, "h2o_c": 2}, 2.0),
+        "GTHOy": ({"gthox_c": -1, "nadph_c": -1, "gthrd_c": 2, "nadp_c": 1}, 2.0),
+        "G6PDH2": ({"nadp_c": -1, "nadph_c": 1}, 5.0),
+        "GND": ({"nadp_c": -1, "nadph_c": 1}, 1.0),
+        "NADPHOX": ({"nadph_c": -1, "nadp_c": 1}, 2.0)}
+    S = np.zeros((len(mets), len(reactions)))
+    for j, (stoichiometry, _) in enumerate(reactions.values()):
+        for met, coefficient in stoichiometry.items():
+            S[mets.index(met), j] = coefficient
+    return (Model(S, list(reactions), mets, formulas=formulas),
+            np.array([value for _, value in reactions.values()]))
+
+
+#: The answers to the functional toy, worked by hand from its docstring.
+FUNCTIONAL_TOY_EXPECTED = {
+    "elem_n_uptake": 2.0, "elem_n_from_amino_acids": 1.0,
+    "elem_c_from_glucose": 12 / 17, "elem_c_from_amino_acids": 5 / 17,
+    "elem_c_from_lactate_pyruvate": 0.0, "elem_c_to_lactate": 9 / 17, "elem_c_to_co2": 8 / 17,
+    "div_c_effective_sources": 289 / 169, "div_c_dominant_source": 12 / 17,
+    "aa_glutamine_net_uptake": 1.0, "aa_total_uptake": 1.0, "aa_n_taken_up": 1.0,
+    "ros_h2o2_production": 3.0, "ros_h2o2_removal": 4.0, "ros_h2o2_removal_per_production": 4 / 3,
+    "ros_h2o2_removed_by_catalase": 0.5, "ros_h2o2_removed_by_glutathione_peroxidase": 0.5,
+    "ros_glutathione_regeneration_cover": 6 / 2, "ros_glutathione_cycle_closure": 1.0,
+    "conv_lactate_per_glucose_carbon": 9 / 12, "conv_nadph_per_carbon": 6 / 17,
+    "bud_nadph_to_glutathione_reduction": 2 / 4, "bud_oxppp_cover_of_glutathione_reduction": 6 / 2,
+}
+
+
 def _self_test() -> None:
     """A three-reaction model whose every descriptor can be checked by hand."""
     #            EX_a   a->b   EX_b
@@ -739,6 +1094,16 @@ def _self_test() -> None:
     g = flux2feature(toy, flux)
     for name, expected in COMPARTMENT_TOY_EXPECTED.items():
         assert math.isclose(g[name], expected, rel_tol=1e-9), (name, g[name], expected)
+
+    # elements, amino acids, oxidative defence and conversion, worked by hand
+    toy, flux = _functional_toy()
+    h = flux2feature(toy, flux)
+    for name, expected in FUNCTIONAL_TOY_EXPECTED.items():
+        assert math.isclose(h[name], expected, rel_tol=1e-9, abs_tol=1e-12), (name, h[name], expected)
+    assert not audit(toy)[0] is None
+    absent = {r["name"]: r for r in audit(toy)}
+    assert absent["ros_h2o2_removed_by_peroxiredoxin"]["computable"] is False
+    assert math.isnan(flux2feature(toy, flux, which="all")["ros_h2o2_removed_by_peroxiredoxin"])
 
     computable = sum(r["computable"] for r in rows.values())
     print(f"self-test passed: {len(rows)} descriptors declared, "
