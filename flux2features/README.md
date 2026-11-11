@@ -26,8 +26,7 @@ archived at Zenodo ([doi:10.5281/zenodo.19339596](https://doi.org/10.5281/zenodo
 
 | path | what it is |
 |---|---|
-| `matlab/generateModelsAndSamples_flux2features.m` | builds both reconstructions, imposes the 3 × 3 design plus the reference, and samples every condition with three CHRR chains, checking every perturbed chain against its bound before saving it |
-| `matlab/sampleObjectiveSensitivity_flux2features.m` | samples the reference and G6PDH2 0.10 of Original again with NaKt held at no less than 95% and 90% of its maximum (three chains each, same procedure); the notebook reads them in stage 08c and the manuscript reports them once they exist |
+| `matlab/generateModelsAndSamples_flux2features.m` | builds both reconstructions and samples every condition with three CHRR chains, each from its own fixed seed: the 3 × 3 design plus the reference in both models, and the reference and G6PDH2 0.10 of Original with NaKt held at no less than 95% and 90% of its maximum. Checks every chain against the condition it is named after and writes a SHA-256 fingerprint of each; `mode = 'check'` samples one chain and compares it with `matlab/sampling_fingerprints.csv` |
 | `matlab/flux2feature.m` | the representation packaged for reuse, base MATLAB, no toolbox |
 | `python/flux2feature.py` | the same tool in Python (NumPy only), plus the elemental, source-diversity, amino-acid, oxidative-defence and conversion families, which the MATLAB version does not have yet; the notebook checks it against its engine (stage 28) |
 | `python/test_flux2feature.py`, `matlab/test_flux2feature.m` | the tests: every descriptor of a three-reaction model, of a two-compartment network and of a toy exchanging glucose, glutamine, lactate and CO2 worked by hand, the absence rule, and a real state of RBC-GEM against reference values |
@@ -57,14 +56,20 @@ Run the tests with `python python/test_flux2feature.py` and, in MATLAB,
 ## Running the analysis
 
 The code and the data are kept apart. The project folder holds `data/`
-(`RBC-GEM.mat` and `metadata/`), `results/` and `reports/paper/`; the sampling
-archives are several gigabytes and are deposited separately.
+(`RBC-GEM.mat` and `metadata/`), `results/` and `reports/paper/`. The sampling
+archives (about 13 GB) are not distributed: the MATLAB script regenerates them,
+every chain from its own fixed seed.
 
-1. **Sampling (MATLAB, COBRA Toolbox v3, Gurobi and/or MOSEK).** Run
-   `matlab/generateModelsAndSamples_flux2features.m` and choose the project
-   folder. It writes `results/raw/{models,fluxes,samples}` and
-   `results/raw/sampling_log.txt` (solver used for the rounding, seed and bound
-   check of every chain).
+1. **Sampling (MATLAB, COBRA Toolbox v3, Gurobi and/or MOSEK, about 9 hours).**
+   Run `matlab/generateModelsAndSamples_flux2features.m` and choose the project
+   folder. It writes `results/raw/{models,fluxes,samples,samples_objective}`,
+   `results/raw/sampling_log.txt` and `results/raw/sampling_fingerprints.csv`
+   (seed, rounding solver, software versions and SHA-256 of every chain).
+   To check first that your installation reproduces the published chains, set
+   `mode = 'check'`: it samples one chain (about 7 minutes) into a temporary
+   folder and compares it with `matlab/sampling_fingerprints.csv`. A different
+   version of MATLAB, the COBRA Toolbox or the solver can change the arithmetic
+   of the rounding, and with it the chains; the comparison says so.
 2. **Analysis (Python 3.11 or later; `conda env create -f environment.yml`).**
    Point the notebook at the project folder, either with the environment
    variable `FLUX2FEATURES_PROJECT=/path/to/project` or with a file
