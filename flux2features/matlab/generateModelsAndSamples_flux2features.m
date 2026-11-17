@@ -55,10 +55,26 @@
 % (matlab/sampling_fingerprints.csv). The fingerprint is the SHA-256 of the
 % chain's numbers as saved (double precision, reactions down the rows).
 %
-% If the script stops halfway (a solver error, a power cut), run it again:
-% chains already written with the same seed are kept and skipped. A sample
-% file that this script did not write, from an older unseeded run, stops it,
-% so that old and new chains never mix: move the old results/raw/ away first.
+% IF IT STOPS (MATLAB hangs, a solver error, a power cut), just run it again.
+% Every chain whose file and fingerprint are both there is kept and skipped,
+% conditions with all their chains are skipped without rounding, Pruned is
+% loaded instead of rebuilt, and sampling continues with the first chain that
+% is missing. A chain is saved under a temporary name and renamed only once
+% it is complete, so a chain cut off while saving never passes for a good
+% one; a leftover temporary file, or a chain without a fingerprint, is moved
+% to results/raw/interrupted/ and drawn again from the same seed. Every line
+% of the log carries the time, so the log shows where a stop happened.
+% The rounded polytope of every condition is saved in models/ as soon as it is
+% ready (<stem>_polytope.mat), so a run stopped while sampling starts again
+% from the saved polytope instead of rounding for another 30-50 minutes.
+% It is deleted once all the condition's chains are saved.
+% If one condition keeps hanging while its polytope is rounded, stop MATLAB
+% (Ctrl+C), put 'mosek' first in roundingSolvers and run again: the solver
+% each condition used is written to the fingerprints.
+%
+% A sample file in a folder with no fingerprints at all comes from an older,
+% unseeded run and stops the script, so that old and new chains never mix:
+% move the old results/raw/ away first.
 %
 % TWO RULES THIS SCRIPT ENFORCES, because breaking either one silently
 % produces chains that carry the wrong condition:
@@ -79,6 +95,17 @@
 % with Gurobi, then MOSEK, then GLPK, the bounds always unchanged, and the
 % solver that succeeded is written to the log and the fingerprints.
 %
+% RUNNING WITHOUT THE DESKTOP. If MATLAB itself stops responding (the desktop
+% freezes after a waitbar fills), run the script from a terminal instead,
+% where there is no desktop to freeze and less memory is used:
+%
+%   export FLUX2FEATURES_PROJECT=/path/to/MCBCI_terapiasPersonalizadas
+%   /Applications/MATLAB_R2024b.app/bin/matlab -batch \
+%       "run('/path/to/flux2features/matlab/generateModelsAndSamples_flux2features.m')"
+%
+% (use your MATLAB version in the path). The log and the fingerprints are the
+% same either way, and the run resumes where the last one stopped.
+%
 % Requirements: COBRA Toolbox v3, Gurobi and/or MOSEK.
 % Run from any folder; you are asked for the project folder (the one that
 % holds data/ and results/), unless projectDir is set below.
@@ -94,11 +121,23 @@ nStepsPerPoint = 200;                 % sampleCbModel's default, written out
 roundingSolvers = {'gurobi', 'mosek', 'glpk'};
 checkStem = 'G6PD_0_1_h2o2_1';         % the condition 'check' samples
 
+% A chain that hangs. COBRA's sampler can get stuck for good when a numerical
+% step leaves the polytope (a NaN in its rejection loop), and with a fixed
+% seed it gets stuck at the same step every time. Give such a chain another
+% seed here, by its file name without .mat, for example
+%     seedOffset.G6PD_0_1_h2o2_1_alpha90_samples2 = 1000;
+% The seed it then uses (the usual one plus the offset) is written to the log
+% and the fingerprints, so the chain stays reproducible.
+seedOffset = struct();
+
 initCobraToolbox(false)
 changeCobraSolver('gurobi', 'all', 0);
 
 %% Folders, log and fingerprints
 
+if isempty(projectDir)                 % from a terminal, the environment can name it
+    projectDir = getenv('FLUX2FEATURES_PROJECT');
+end
 if isempty(projectDir)
     projectDir = uigetdir(pwd, 'Select the project folder (holds data/ and results/)');
 end
@@ -108,7 +147,7 @@ if strcmp(mode, 'check')              % a check writes nothing into the project
     rawDir = fullfile(tempdir, 'flux2features_check');
     if exist(rawDir, 'dir'), rmdir(rawDir, 's'); end
 end
-for sub = {'models', 'fluxes', 'samples', 'samples_objective'}
+for sub = {'models', 'fluxes', 'samples', 'samples_objective', 'interrupted'}
     if ~exist(fullfile(rawDir, sub{1}), 'dir'), mkdir(fullfile(rawDir, sub{1})); end
 end
 
@@ -133,16 +172,24 @@ loaded = load(modelFile);
 models.Original = loaded.RBC_GEM;
 note(logId, 'Original: %s, %d reactions', modelFile, numel(models.Original.rxns));
 
-if strcmp(mode, 'all')
+prunedFile = fullfile(rawDir, 'models', 'thermoConsistModel.mat');
+if strcmp(mode, 'all') && exist(prunedFile, 'file') && ~isempty(written.file)
+    % resuming a seeded run: Pruned was built by this script on the first run
+    loaded = load(prunedFile);
+    models.Pruned = loaded.thermoConsistModel;
+    note(logId, 'Pruned: loaded from %s (%d reactions)', prunedFile, numel(models.Pruned.rxns));
+elseif strcmp(mode, 'all')
     feasTol = getCobraSolverParams('LP', 'feasTol');
     [~, ~, ~, ~, ~, ~, ~, stoichConsistModel] = findStoichConsistentSubset(models.Original, ...
         0, 0, [], feasTol * 10);
     [~, ~, ~, thermoConsistModel] = findThermoConsistentFluxSubset(stoichConsistModel);
-    save(fullfile(rawDir, 'models', 'thermoConsistModel'), 'thermoConsistModel')
+    save(prunedFile, 'thermoConsistModel')
     models.Pruned = thermoConsistModel;
     note(logId, 'Pruned: %d of %d reactions kept', numel(models.Pruned.rxns), ...
         numel(models.Original.rxns));
+end
 
+if strcmp(mode, 'all')
     v_or = optimizeCbModel(models.Original, 'max').v;
     save(fullfile(rawDir, 'fluxes', 'v_or'), 'v_or')
     v_thermoOr = optimizeCbModel(models.Pruned, 'max').v;
@@ -191,18 +238,24 @@ for k = 1:numel(conditions)
     missing = [];
     for chain = chains
         file = fullfile(c.folder, sprintf('%s_samples%d.mat', c.stem, chain));
-        seed = baseSeed + 100 * k + chain;
+        seed = chainSeed(baseSeed, k, chain, c.stem, seedOffset);
+        setAside(fullfile(rawDir, [file(1:end - 4) '_partial.mat']), rawDir, logId);
         if exist(fullfile(rawDir, file), 'file')
             if any(strcmp(written.file, file) & written.seed == seed)
-                note(logId, '%s: already sampled with seed %d, kept', file, seed);
-                continue
+                continue                       % done in an earlier run
             end
-            error(['%s exists but this script did not write it with seed %d. ' ...
-                'Move the old results/raw/ away before sampling again.'], file, seed);
+            if isempty(written.file)
+                error(['%s exists but this folder has no fingerprints: it comes from an ' ...
+                    'older, unseeded run. Move the old results/raw/ away before sampling.'], file);
+            end
+            setAside(fullfile(rawDir, file), rawDir, logId);   % saved, but never fingerprinted
         end
         missing(end + 1) = chain; %#ok<AGROW>
     end
-    if isempty(missing), continue, end
+    if isempty(missing)
+        note(logId, '%s: all %d chains already sampled, skipped', c.stem, numel(chains));
+        continue
+    end
 
     % the condition's own model, and its FBA optimum
     model = constrain(models.(c.model), c);
@@ -214,27 +267,53 @@ for k = 1:numel(conditions)
         fba.f, model.lb(objective));
 
     % the condition's own rounded polytope, from its own seed
+    % The rounding is the slow step (30-50 minutes for some conditions) and does
+    % not depend on the chain seeds, so it is saved as soon as it is done and
+    % loaded on the next run instead of being repeated. The same rounding seed
+    % gives the same polytope, so a loaded one changes no chain.
     options = struct('nStepsPerPoint', nStepsPerPoint, 'optPercentage', 100 * c.alpha);
-    [P, solver] = roundPolytope(model, options, baseSeed + 100 * k, roundingSolvers, logId, c.stem);
+    polytopeFile = fullfile(rawDir, 'models', [c.stem '_polytope.mat']);
+    roundingSeed = baseSeed + 100 * k;
+    [P, solver] = loadPolytope(polytopeFile, roundingSeed, logId, c.stem);
+    if isempty(P)
+        note(logId, '%s: rounding the polytope (chains to sample: %s); this can take 30-50 minutes', ...
+            c.stem, mat2str(missing));
+        started = tic;
+        [P, solver] = roundPolytope(model, options, roundingSeed, roundingSolvers, logId, c.stem);
+        save(polytopeFile, 'P', 'solver', 'roundingSeed', '-v7')
+        note(logId, '%s: rounded with %s in %.0f minutes, saved to %s', c.stem, solver, ...
+            toc(started) / 60, polytopeFile);
+    end
 
     for chain = missing
-        seed = baseSeed + 100 * k + chain;
+        seed = chainSeed(baseSeed, k, chain, c.stem, seedOffset);
         file = fullfile(c.folder, sprintf('%s_samples%d.mat', c.stem, chain));
         label = sprintf('%s chain %d', c.stem, chain);
 
+        note(logId, ['%s: sampling %d points with seed %d (about 6 minutes; if the waitbar ' ...
+            'stops moving for 20 minutes the chain is stuck: see seedOffset)'], label, nPoints, seed);
         rng(seed, 'twister');
         options.nPointsReturned = nPoints;
         options.toRound = 0;
         [~, samples] = sampleCbModel(model, [], 'CHRR', options, P);
 
         checkChain(samples, model, c, fba.f, label, logId);
-        save(fullfile(rawDir, file), 'samples', '-v7')
+        % saved under a temporary name, renamed only once complete
+        partial = fullfile(rawDir, [file(1:end - 4) '_partial.mat']);
+        save(partial, 'samples', '-v7')
+        movefile(partial, fullfile(rawDir, file));
         sha = sha256(samples);
         appendFingerprint(fingerprintFile, file, c, chain, seed, solver, ...
             baseSeed + 100 * k, size(samples, 2), sha, software);
         note(logId, '%s: seed %d, rounding %s, %d points, SHA-256 %s', label, seed, ...
             solver, size(samples, 2), sha);
         compareWithPublished(published, file, seed, sha, logId);
+    end
+
+    % every chain of the condition is saved: the polytope is no longer needed
+    if exist(polytopeFile, 'file')
+        delete(polytopeFile);
+        note(logId, '%s: all chains saved, rounded polytope deleted', c.stem);
     end
 end
 
@@ -270,13 +349,31 @@ end
 end
 
 
+function [P, solver] = loadPolytope(file, roundingSeed, logId, stem)
+% The polytope rounded on an earlier run, if it was rounded from the same seed.
+P = [];
+solver = '';
+if ~exist(file, 'file'), return, end
+saved = load(file);
+if saved.roundingSeed ~= roundingSeed
+    note(logId, '%s: saved polytope has rounding seed %d, not %d; rounding again', ...
+        stem, saved.roundingSeed, roundingSeed);
+    return
+end
+P = saved.P;
+solver = saved.solver;
+note(logId, '%s: rounded polytope loaded from %s (rounded with %s)', stem, file, solver);
+end
+
+
 function [P, used] = roundPolytope(model, options, seed, solvers, logId, stem)
 % Round the condition's polytope (maximum-volume ellipsoid), trying each
-% solver in turn. sampleCbModel rounds and samples in one call, so one point
-% is drawn and discarded; the generator is reset before every attempt, so
-% the result does not depend on which attempts failed.
-options.toRound = 1;
-options.nPointsReturned = 1;
+% solver in turn. This is exactly what chrrSampler does before it samples
+% (chrrParseModel, then preprocess with the same options), stopped before
+% any point is drawn: the polytope can then be saved at once, and no random
+% walk runs until a chain's own seed is set. Rounding draws no random
+% numbers; the generator is reset anyway, so nothing depends on which
+% attempts failed.
 P = [];
 used = '';
 for s = 1:numel(solvers)
@@ -285,7 +382,15 @@ for s = 1:numel(solvers)
     end
     try
         rng(seed, 'twister');
-        P = sampleCbModel(model, [], 'CHRR', options);
+        parsed = chrrParseModel(model);
+        if (~isfield(parsed, 'A_eq') || isempty(parsed.A_eq)) && ...
+                (~isfield(parsed, 'b_eq') || isempty(parsed.b_eq))
+            parsed.A_eq = [];
+            parsed.b_eq = [];
+        end
+        settings = struct('toRound', 1, 'bioModel', 1, 'fullDim', 0, 'model', model, ...
+            'useFastFVA', false, 'optPercentage', options.optPercentage);
+        P = preprocess(parsed, settings);
         used = solvers{s};
     catch err
         note(logId, '%s: rounding with %s failed (%s)', stem, solvers{s}, err.message);
@@ -404,9 +509,36 @@ where = strrep(where, ',', ';');
 end
 
 
+function seed = chainSeed(baseSeed, k, chain, stem, seedOffset)
+% Chain c of condition k: baseSeed + 100*k + c, plus any offset set for it above.
+seed = baseSeed + 100 * k + chain;
+name = sprintf('%s_samples%d', stem, chain);
+if isfield(seedOffset, name)
+    seed = seed + seedOffset.(name);
+end
+end
+
+
+function setAside(file, rawDir, logId)
+% Move an incomplete chain out of the way, keeping it for inspection.
+if ~exist(file, 'file'), return, end
+[~, name, ext] = fileparts(file);
+target = fullfile(rawDir, 'interrupted', [name '_' datestr(now, 'yyyymmdd_HHMMSS') ext]);
+movefile(file, target);
+note(logId, '%s: incomplete (interrupted run), moved to %s; it is drawn again', ...
+    [name ext], target);
+end
+
+
 function note(logId, varargin)
-% Print a line and write it to the log.
+% Print a line, with the time, and write it to the log.
 text = sprintf(varargin{:});
+stamp = datestr(now, 'HH:MM');
+if startsWith(text, newline)
+    text = [newline stamp '  ' text(2:end)];
+else
+    text = [stamp '  ' text];
+end
 fprintf('%s\n', text);
 fprintf(logId, '%s\n', text);
 end

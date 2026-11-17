@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use flux2feature, please cite the article and the archived release."
+title: "flux2feature: interpretable descriptors of metabolic flux vectors"
+type: software
+version: 1.0.0
+authors:
+  - family-names: Preciat
+    given-names: Germán
+    affiliation: "Universidad de Guadalajara, CUCEI, Departamento de Bioingeniería Traslacional"
+  - family-names: Sotelo Rodriguez
+    given-names: Ramyet
+    affiliation: "Universidad de Guadalajara, CUCEI, Departamento de Bioingeniería Traslacional"
+  - family-names: Gómez Márquez
+    given-names: Carolina Elizabeth
+    affiliation: "Universidad de Guadalajara, CUCEI, Biodigital Innovation Lab"
+repository-code: "https://github.com/GIMIudg/GIMIpapers/tree/main/flux2features/tools/python"
+license: MIT
+keywords:
+  - metabolic modelling
+  - flux sampling
+  - genome-scale metabolic models
+  - interpretable features
+  - constraint-based modelling

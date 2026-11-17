@@ -1,0 +1,408 @@
+feature,family,block,release,canonical,module,evidence
+aa_alanine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_arginine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_asparagine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_aspartate_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_essential_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_glutamine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_histidine_net_uptake,amino_acid,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+aa_isoleucine_net_uptake,amino_acid,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+aa_leucine_net_uptake,amino_acid,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+aa_lysine_net_uptake,amino_acid,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+aa_methionine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_n_taken_up,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_phenylalanine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_proline_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_serine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_threonine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_total_secretion,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_total_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_tryptophan_net_uptake,amino_acid,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+aa_tyrosine_net_uptake,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_uptake_entropy,amino_acid,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+aa_valine_net_uptake,amino_acid,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+alloc_atp_to_biosynthesis,allocation,internal,alias,turnover_atp_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+alloc_atp_to_energy,allocation,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+alloc_atp_to_redox,allocation,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+alloc_atp_to_transport,allocation,internal,alias,turnover_atp_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+alloc_flux_to_biosynthesis,allocation,internal,core,,,responds to the G6PDH2 restriction
+alloc_flux_to_energy,allocation,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+alloc_flux_to_redox,allocation,internal,core,,,responds to the G6PDH2 restriction strongly
+alloc_flux_to_transport,allocation,internal,alias,path_transport_share,,responds to the G6PDH2 restriction
+alloc_nadph_to_biosynthesis,allocation,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+alloc_nadph_to_redox,allocation,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_atp_from_glycolysis,budget,internal,alias,turnover_atp_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_atp_to_glycolytic_priming,budget,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_atp_to_na_k_pump,budget,internal,alias,turnover_atp_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_bpg_through_shunt,budget,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_co2_from_oxidative_ppp,budget,internal,core,,,responds to the G6PDH2 restriction strongly
+bud_gsh_from_reduction,budget,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_nadh_from_gapdh,budget,internal,core,,,responds to the G6PDH2 restriction
+bud_nadh_to_cytochrome_b5,budget,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_nadh_to_lactate,budget,internal,alias,rxn_ldh,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_nadph_from_oxidative_ppp,budget,internal,core,,,responds to the G6PDH2 restriction strongly
+bud_nadph_to_glutathione_reduction,budget,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+bud_oxppp_cover_of_glutathione_reduction,budget,internal,core,,,responds to the G6PDH2 restriction
+bud_pyruvate_to_lactate,budget,internal,alias,rxn_ldh,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cap_at_bound_boundary,capacity,external,module,,constraints,constant in the sampled states of RBC-GEM
+cap_at_lower_internal,capacity,internal,module,,constraints,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cap_at_upper_internal,capacity,internal,alias,cap_at_bound_boundary,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cap_mean_saturation_boundary,capacity,external,alias,ext_directionality,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cap_mean_saturation_internal,capacity,internal,module,,constraints,responds to the G6PDH2 restriction
+cmp_atp_made_in_cytosol,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_atp_made_in_mitochondrion,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_co2_made_in_cytosol,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_co2_made_in_mitochondrion,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_flux_between_compartments,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_flux_in_cytosol,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_flux_in_mitochondrion,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_nadh_made_in_cytosol,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_nadh_made_in_mitochondrion,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_nadph_made_in_cytosol,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cmp_nadph_made_in_mitochondrion,compartment,internal,core,,,not definable in RBC-GEM; to be evaluated in a reconstruction that supports it
+cof_energy_charge_proxy,cofactor,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cof_glutathione_share,cofactor,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cof_nadh_nad_share,cofactor,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cof_nadph_nadp_share,cofactor,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+cof_nadph_over_nadh,cofactor,internal,core,,,responds to the G6PDH2 restriction
+cof_redox_per_energy,cofactor,internal,core,,,responds to the G6PDH2 restriction
+conv_atp_per_carbon,conversion,combined,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+conv_co2_per_carbon,conversion,combined,alias,elem_c_to_co2,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+conv_lactate_per_glucose_carbon,conversion,combined,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+conv_nadph_per_carbon,conversion,combined,core,,,responds to the G6PDH2 restriction strongly
+cpl_boundary_share,coupling,combined,core,,,responds to the G6PDH2 restriction
+cpl_internal_per_boundary,coupling,combined,alias,cpl_boundary_share,,responds to the G6PDH2 restriction
+cpl_ppp_per_glucose_uptake,coupling,combined,core,,,responds to the G6PDH2 restriction
+cpl_ppp_per_oxygen_uptake,coupling,combined,core,,,responds to the G6PDH2 restriction strongly
+cpl_secretion_over_uptake,coupling,combined,alias,ext_directionality,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+div_c_dominant_source,source_diversity,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+div_c_effective_sources,source_diversity,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+div_c_source_entropy,source_diversity,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+div_n_effective_sources,source_diversity,external,module,,boundary and medium,responds to the G6PDH2 restriction
+div_n_source_entropy,source_diversity,external,module,,boundary and medium,responds to the G6PDH2 restriction
+eff_atp_per_glucose,efficiency,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+eff_gsh_per_h2o2,efficiency,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+eff_nadph_per_atp,efficiency,internal,core,,,responds to the G6PDH2 restriction
+eff_nadph_per_glucose,efficiency,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+eff_nadph_per_h2o2,efficiency,internal,core,,,responds to the G6PDH2 restriction
+eff_nadph_per_nadh,efficiency,internal,alias,cof_nadph_over_nadh,,responds to the G6PDH2 restriction
+eff_oxidative_ppp_per_glycolysis,efficiency,internal,core,,,responds to the G6PDH2 restriction strongly
+eff_peroxide_clearance_split,efficiency,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+eff_ppp_flux_split,efficiency,internal,core,,,responds to the G6PDH2 restriction
+eff_redox_buffer_ratio,efficiency,internal,alias,cof_glutathione_share,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_c_from_amino_acids,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_c_from_glucose,elemental,external,alias,ex_glucose_uptake,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_c_from_lactate_pyruvate,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_c_to_co2,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_c_to_lactate,elemental,external,alias,rxn_ldh,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_n_from_amino_acids,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_n_secretion,elemental,external,alias,elem_n_uptake,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_n_uptake,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_p_secretion,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_p_uptake,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_s_secretion,elemental,external,alias,elem_s_uptake,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+elem_s_uptake,elemental,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_adenine_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_adenine_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_adenosine_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_adenosine_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_ammonium_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_ammonium_uptake,boundary_metabolite,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+ex_ascorbate_net,boundary_metabolite,external,alias,ex_ascorbate_uptake,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_ascorbate_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_carbon_dioxide_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_carbon_dioxide_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_carbon_retention,boundary_efficiency,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_carbon_secretion,boundary_efficiency,external,alias,ex_carbon_uptake,,responds to the G6PDH2 restriction
+ex_carbon_uptake,boundary_efficiency,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_cysteine_net,boundary_metabolite,external,alias,ex_cysteine_uptake,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_cysteine_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_glucose_net,boundary_metabolite,external,alias,ex_glucose_uptake,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_glucose_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_glutamate_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_glutamate_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_glycine_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_glycine_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_hydrogen_peroxide_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_hydrogen_peroxide_uptake,boundary_metabolite,external,alias,ex_hydrogen_peroxide_net,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_inosine_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_inosine_uptake,boundary_metabolite,external,alias,ex_inosine_net,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_lactate_net,boundary_metabolite,external,alias,rxn_ldh,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_lactate_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_n_secreted,exchange_burden,external,alias,ext_fraction_positive,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_n_uptaken,exchange_burden,external,alias,ext_fraction_positive,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_net_balance,exchange_burden,external,alias,ext_directionality,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_nicotinamide_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_nicotinamide_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_nicotinate_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_nicotinate_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_oxidative_exposure,oxidative_environment,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_oxidised_glutathione_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_oxidised_glutathione_uptake,boundary_metabolite,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+ex_oxygen_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_oxygen_uptake,boundary_metabolite,external,alias,ex_oxygen_net,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_phosphate_net,boundary_metabolite,external,module,,boundary and medium,responds to the G6PDH2 restriction
+ex_phosphate_uptake,boundary_metabolite,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+ex_proton_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_proton_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_pyruvate_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_pyruvate_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_redox_supply_balance,redox_environment,external,alias,ex_reductant_supply,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_reduced_glutathione_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_reduced_glutathione_uptake,boundary_metabolite,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+ex_reductant_supply,redox_environment,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_riboflavin_net,boundary_metabolite,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+ex_riboflavin_uptake,boundary_metabolite,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+ex_ribose_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_ribose_uptake,boundary_metabolite,external,alias,ex_ribose_net,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_superoxide_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_superoxide_uptake,boundary_metabolite,external,alias,ex_superoxide_net,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_thiamine_net,boundary_metabolite,external,module,,boundary and medium,responds to the G6PDH2 restriction
+ex_thiamine_uptake,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_total_secretion,exchange_burden,external,alias,ext_positive_flux,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_total_uptake,exchange_burden,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_toxicity_load,admissibility,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_turnover_ratio,exchange_burden,external,alias,ext_directionality,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_uptake_entropy,exchange_burden,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_urea_net,boundary_metabolite,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ex_urea_uptake,boundary_metabolite,external,module,,boundary and medium,constant in the sampled states of RBC-GEM
+exrole_ion_secretion,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_ion_uptake,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_metabolite_secretion,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_metabolite_uptake,boundary_role,external,module,,boundary and medium,responds to the G6PDH2 restriction
+exrole_nutrient_secretion,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_nutrient_uptake,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_therapeutic_secretion,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_therapeutic_uptake,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_toxicant_secretion,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_toxicant_uptake,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_waste_secretion,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_waste_uptake,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_xenobiotic_secretion,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+exrole_xenobiotic_uptake,boundary_role,external,module,,boundary and medium,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_L0,magnitude,external,generic,,,constant in the sampled states of RBC-GEM
+ext_L1,magnitude,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_L2,magnitude,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_Linf,magnitude,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_cv_abs,distribution,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_directionality,architecture,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_dominant_share,architecture,external,alias,ext_L1,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_effective_reactions,architecture,external,alias,ext_cv_abs,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_fraction_active,sparsity,external,generic,,,constant in the sampled states of RBC-GEM
+ext_fraction_negative,architecture,external,alias,ext_fraction_positive,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_fraction_positive,architecture,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_gini,sparsity,external,alias,ext_cv_abs,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_hhi_concentration,architecture,external,alias,ext_cv_abs,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_mean_abs,distribution,external,alias,ext_L1,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_median_abs,distribution,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_negative_flux,architecture,external,alias,ex_total_uptake,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_normalised_entropy,entropy,external,alias,ext_cv_abs,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_positive_flux,architecture,external,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_sd_abs,distribution,external,alias,ext_L2,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ext_shannon_entropy,entropy,external,alias,ext_cv_abs,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_L0,magnitude,internal,generic,,,constant in the sampled states of RBC-GEM
+int_L1,magnitude,internal,generic,,,responds to the G6PDH2 restriction
+int_L2,magnitude,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_Linf,magnitude,internal,generic,,,constant in the sampled states of RBC-GEM
+int_RMS,magnitude,internal,alias,int_L2,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_cv_abs,distribution,internal,generic,,,responds to the G6PDH2 restriction
+int_directionality,architecture,internal,generic,,,responds to the G6PDH2 restriction
+int_dominant_share,architecture,internal,alias,int_L1,,responds to the G6PDH2 restriction
+int_effective_reactions,architecture,internal,alias,int_shannon_entropy,,responds to the G6PDH2 restriction
+int_fraction_active,sparsity,internal,generic,,,constant in the sampled states of RBC-GEM
+int_fraction_negative,architecture,internal,alias,int_fraction_positive,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_fraction_positive,architecture,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_fraction_zero,sparsity,internal,generic,,,constant in the sampled states of RBC-GEM
+int_gini,sparsity,internal,alias,int_shannon_entropy,,responds to the G6PDH2 restriction
+int_hhi_concentration,architecture,internal,alias,int_cv_abs,,responds to the G6PDH2 restriction
+int_hoyer_sparsity,sparsity,internal,alias,int_cv_abs,,responds to the G6PDH2 restriction
+int_iqr_abs,distribution,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_kurtosis_signed,distribution,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_mad_abs,distribution,internal,alias,int_median_abs,,responds to the G6PDH2 restriction
+int_max_abs,distribution,internal,generic,,,constant in the sampled states of RBC-GEM
+int_mean_abs,distribution,internal,alias,int_L1,,responds to the G6PDH2 restriction
+int_mean_signed,distribution,internal,generic,,,responds to the G6PDH2 restriction
+int_median_abs,distribution,internal,generic,,,responds to the G6PDH2 restriction
+int_median_signed,distribution,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_negative_flux,architecture,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_normalised_entropy,entropy,internal,alias,int_shannon_entropy,,responds to the G6PDH2 restriction
+int_positive_flux,architecture,internal,generic,,,responds to the G6PDH2 restriction
+int_q05_abs,distribution,internal,generic,,,constant in the sampled states of RBC-GEM
+int_q25_abs,architecture,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_q50_abs,architecture,internal,alias,int_median_abs,,responds to the G6PDH2 restriction
+int_q75_abs,architecture,internal,alias,int_iqr_abs,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_q95_abs,distribution,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_renyi_entropy_2,entropy,internal,alias,int_cv_abs,,responds to the G6PDH2 restriction
+int_sd_abs,distribution,internal,alias,int_L2,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_sd_signed,distribution,internal,alias,int_L2,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+int_shannon_entropy,entropy,internal,generic,,,responds to the G6PDH2 restriction
+int_skewness_signed,distribution,internal,generic,,,responds to the G6PDH2 restriction
+int_top10pct_share,architecture,internal,generic,,,responds to the G6PDH2 restriction
+int_top1pct_share,architecture,internal,alias,int_L1,,responds to the G6PDH2 restriction
+int_top5pct_share,architecture,internal,generic,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+nadph_from_oxidative_ppp,biochemical,internal,alias,bud_nadph_from_oxidative_ppp,,responds to the G6PDH2 restriction strongly
+net_active_metabolites,network,internal,core,,,constant in the sampled states of RBC-GEM
+net_hub_turnover_share,network,internal,core,,,responds to the G6PDH2 restriction
+net_metabolite_activity_entropy,network,internal,alias,net_metabolite_activity_gini,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+net_metabolite_activity_gini,network,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+net_weighted_metabolite_degree,network,internal,core,,,responds to the G6PDH2 restriction
+net_weighted_reaction_degree,network,internal,core,,,responds to the G6PDH2 restriction
+oxidative_ppp_flux,biochemical,internal,alias,turnover_6pgc_c,,responds to the G6PDH2 restriction strongly
+path_amino_acid_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_amino_acid_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_amino_acid_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_amino_acid_share,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_cofactor_vitamin_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_cofactor_vitamin_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_cofactor_vitamin_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_cofactor_vitamin_share,pathway,internal,alias,path_cofactor_vitamin_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_glutathione_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_glutathione_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_glutathione_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_glutathione_share,pathway,internal,alias,path_glutathione_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_glycan_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_glycan_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_glycan_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_glycan_share,pathway,internal,alias,path_glycan_activity,,responds to the G6PDH2 restriction
+path_glycolysis_activity,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_glycolysis_directionality,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_glycolysis_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_glycolysis_share,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_lipid_activity,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_lipid_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_lipid_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_lipid_share,pathway,internal,alias,path_lipid_activity,,responds to the G6PDH2 restriction
+path_nucleotide_activity,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_nucleotide_directionality,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_nucleotide_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_nucleotide_share,pathway,internal,alias,path_nucleotide_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pentose_phosphate_activity,pathway,internal,core,,,responds to the G6PDH2 restriction strongly
+path_pentose_phosphate_directionality,pathway,internal,core,,,responds to the G6PDH2 restriction strongly
+path_pentose_phosphate_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_pentose_phosphate_share,pathway,internal,core,,,responds to the G6PDH2 restriction strongly
+path_porphyrin_hemoglobin_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_porphyrin_hemoglobin_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_porphyrin_hemoglobin_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_porphyrin_hemoglobin_share,pathway,internal,alias,path_porphyrin_hemoglobin_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_protein_turnover_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_protein_turnover_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_protein_turnover_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_protein_turnover_share,pathway,internal,alias,path_protein_turnover_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pseudoreactions_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pseudoreactions_directionality,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_pseudoreactions_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_pseudoreactions_share,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_purine_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_purine_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_purine_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_purine_share,pathway,internal,alias,path_purine_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pyrimidine_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pyrimidine_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pyrimidine_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_pyrimidine_share,pathway,internal,alias,path_pyrimidine_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pyruvate_tca_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pyruvate_tca_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_pyruvate_tca_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_pyruvate_tca_share,pathway,internal,alias,path_pyruvate_tca_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_rapoport_luebering_activity,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_rapoport_luebering_directionality,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_rapoport_luebering_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_rapoport_luebering_share,pathway,internal,alias,path_rapoport_luebering_activity,,responds to the G6PDH2 restriction
+path_redox_detox_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_redox_detox_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_redox_detox_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_redox_detox_share,pathway,internal,alias,path_redox_detox_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_transport_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_transport_directionality,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_transport_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_transport_share,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_xenobiotic_hormone_activity,pathway,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+path_xenobiotic_hormone_directionality,pathway,internal,core,,,responds to the G6PDH2 restriction
+path_xenobiotic_hormone_engagement,pathway,internal,module,,sparse states,constant in the sampled states of RBC-GEM
+path_xenobiotic_hormone_share,pathway,internal,alias,path_xenobiotic_hormone_activity,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+redox_burden,biochemical,internal,core,,,responds to the G6PDH2 restriction
+ros_glutathione_cycle_closure,oxidative_defense,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_glutathione_regeneration_cover,oxidative_defense,internal,alias,bud_nadph_to_glutathione_reduction,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_h2o2_production,oxidative_defense,internal,alias,turnover_h2o2_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_h2o2_removal,oxidative_defense,internal,alias,turnover_h2o2_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_h2o2_removal_per_production,oxidative_defense,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_h2o2_removed_by_catalase,oxidative_defense,internal,module,,oxidative load,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_h2o2_removed_by_glutathione_peroxidase,oxidative_defense,internal,alias,rxn_gpx,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_h2o2_removed_by_peroxiredoxin,oxidative_defense,internal,module,,oxidative load,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_superoxide_dismutated,oxidative_defense,internal,module,,oxidative load,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+ros_superoxide_production,oxidative_defense,internal,module,,oxidative load,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_adenylate_kinase,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_catalase,biochemical,internal,alias,ros_h2o2_removed_by_catalase,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_dpg_mutase,biochemical,internal,core,,,responds to the G6PDH2 restriction
+rxn_dpg_phosphatase,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_g6pd,biochemical,internal,alias,turnover_6pgc_c,,responds to the G6PDH2 restriction strongly
+rxn_gnd,biochemical,internal,alias,turnover_6pgc_c,,responds to the G6PDH2 restriction strongly
+rxn_gpx,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_hexokinase,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_ldh,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_na_k_atpase,biochemical,internal,core,,,constant in the sampled states of RBC-GEM
+rxn_pfk,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_pgl,biochemical,internal,alias,turnover_6pgc_c,,responds to the G6PDH2 restriction strongly
+rxn_pyruvate_kinase,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+rxn_sod,biochemical,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_atp_dominant_sink,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_atp_dominant_source,cofactor_sources,internal,alias,turnover_atp_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_atp_sink_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_atp_source_entropy,cofactor_sources,internal,alias,turnover_atp_c,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_fadh2_dominant_sink,cofactor_sources,internal,module,,cofactor sources,never finite in RBC-GEM; to be evaluated in a reconstruction that supports it
+src_fadh2_dominant_source,cofactor_sources,internal,module,,cofactor sources,never finite in RBC-GEM; to be evaluated in a reconstruction that supports it
+src_fadh2_sink_entropy,cofactor_sources,internal,module,,cofactor sources,never finite in RBC-GEM; to be evaluated in a reconstruction that supports it
+src_fadh2_source_entropy,cofactor_sources,internal,module,,cofactor sources,never finite in RBC-GEM; to be evaluated in a reconstruction that supports it
+src_glutathione_dominant_sink,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_glutathione_dominant_source,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_glutathione_sink_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_glutathione_source_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_gtp_dominant_sink,cofactor_sources,internal,alias,src_gtp_sink_entropy,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_gtp_dominant_source,cofactor_sources,internal,alias,src_gtp_source_entropy,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_gtp_sink_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_gtp_source_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_nadh_dominant_sink,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_nadh_dominant_source,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_nadh_sink_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_nadh_source_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_nadph_dominant_sink,cofactor_sources,internal,core,,,responds to the G6PDH2 restriction
+src_nadph_dominant_source,cofactor_sources,internal,core,,,responds to the G6PDH2 restriction strongly
+src_nadph_sink_entropy,cofactor_sources,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_nadph_source_entropy,cofactor_sources,internal,core,,,responds to the G6PDH2 restriction strongly
+src_thioredoxin_dominant_sink,cofactor_sources,internal,alias,src_thioredoxin_sink_entropy,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_thioredoxin_dominant_source,cofactor_sources,internal,module,,cofactor sources,constant in the sampled states of RBC-GEM
+src_thioredoxin_sink_entropy,cofactor_sources,internal,module,,cofactor sources,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+src_thioredoxin_source_entropy,cofactor_sources,internal,module,,cofactor sources,constant in the sampled states of RBC-GEM
+turnover_13dpg_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_23dpg_c,turnover,internal,core,,,responds to the G6PDH2 restriction
+turnover_6pgc_c,turnover,internal,core,,,responds to the G6PDH2 restriction strongly
+turnover_accoa_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_adp_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_akg_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_amp_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_atp_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_ctp_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_f6p_c,turnover,internal,core,,,responds to the G6PDH2 restriction strongly
+turnover_fad_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_fadh2_c,turnover,internal,core,,,constant in the sampled states of RBC-GEM
+turnover_g6p_c,turnover,internal,core,,,responds to the G6PDH2 restriction strongly
+turnover_glc__D_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_gln__L_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_glu__L_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_gthox_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_gthrd_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_gtp_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_h2o2_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_lac__L_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_nad_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_nadh_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_nadp_c,turnover,internal,alias,turnover_nadph_c,,responds to the G6PDH2 restriction strongly
+turnover_nadph_c,turnover,internal,core,,,responds to the G6PDH2 restriction strongly
+turnover_o2_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_o2s_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_oaa_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_pi_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_pyr_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"
+turnover_r5p_c,turnover,internal,core,,,responds to the G6PDH2 restriction
+turnover_ru5p__D_c,turnover,internal,alias,turnover_f6p_c,,responds to the G6PDH2 restriction strongly
+turnover_utp_c,turnover,internal,core,,,"varies in RBC-GEM, does not respond to the G6PDH2 restriction"

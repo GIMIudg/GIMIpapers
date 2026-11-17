@@ -57,6 +57,17 @@ fprintf('Generic model: %s (%d reactions)\n', genericModelFile, numel(genericMod
 
 changeCobraSolver(solver, 'all', 0);
 
+% Use the COBRA Toolbox XomicsToModel: other copies on the path (e.g. in COBRA.papers)
+% may be older versions that fail on the transcriptomic data (model.geneExpVal)
+xomicsDir = fullfile(CBTDIR, 'src', 'dataIntegration', 'XomicsToModel');
+addpath(xomicsDir, '-begin');
+allCopies = which('XomicsToModel', '-all');
+if numel(allCopies) > 1
+    fprintf('Other copies of XomicsToModel on the path (ignored):\n');
+    fprintf('   %s\n', allCopies{2:end});
+end
+fprintf('Using %s\n', which('XomicsToModel'));
+
 %% XomicsToModel options (as for iDopaNeuro)
 feasTol = getCobraSolverParams('LP', 'feasTol');
 param = struct();
@@ -125,6 +136,47 @@ for i = 1:numel(neurons)
             specificData.activeReactions = unique([specificData.activeReactions(:); secreted(:)]);
         end
         fprintf('%d secreted exchanges added to the core set\n', numel(secreted));
+    end
+
+    % uptake only of medium components: core exchange reactions keep the open bounds of the
+    % generic model, so exchanges that are core but not medium components (e.g. secretions
+    % observed in the exometabolome or inherited from iDopaNeuro) are made secretion-only.
+    % Gases, water, protons and inorganic ions stay reversible; uptake hypotheses
+    % (rxnsHypothesis) and explicit constraints (rxns2constrain) are kept as given.
+    if istable(specificData.activeReactions)
+        coreRxns = cellstr(specificData.activeReactions.rxns);
+    else
+        coreRxns = cellstr(specificData.activeReactions);
+    end
+    keepOpen = {'EX_o2[e]', 'EX_co2[e]', 'EX_h2o[e]', 'EX_h[e]', 'EX_hco3[e]', 'EX_nh4[e]', 'EX_pi[e]', ...
+        'EX_na1[e]', 'EX_k[e]', 'EX_cl[e]', 'EX_ca2[e]', 'EX_fe2[e]', 'EX_fe3[e]', 'EX_h2o2[e]', 'EX_i[e]'};
+    given = {};
+    for f = {'mediaData', 'rxnsHypothesis', 'rxns2constrain'}
+        if isfield(specificData, f{1}) && istable(specificData.(f{1})) && ...
+                ismember('rxns', specificData.(f{1}).Properties.VariableNames)
+            given = [given; cellstr(specificData.(f{1}).rxns)]; %#ok<AGROW>
+        end
+    end
+    secretionOnly = coreRxns(startsWith(coreRxns, 'EX_') & ~ismember(coreRxns, [keepOpen(:); given]));
+    secretionOnly = unique(secretionOnly(ismember(secretionOnly, genericModel.rxns)));
+    if ~isempty(secretionOnly)
+        T = specificData.rxns2constrain;
+        add = T(ones(numel(secretionOnly), 1), :);
+        for v = T.Properties.VariableNames
+            x = add.(v{1});
+            if iscell(x), add.(v{1}) = repmat({''}, height(add), 1);
+            elseif isstring(x), add.(v{1}) = repmat("", height(add), 1);
+            elseif isnumeric(x), add.(v{1}) = NaN(height(add), 1);
+            end
+        end
+        add.rxns = secretionOnly(:);
+        add.lb = zeros(numel(secretionOnly), 1);
+        add.ub = 1000 * ones(numel(secretionOnly), 1);
+        if ismember('constraintDescription', T.Properties.VariableNames)
+            add.constraintDescription = repmat({'Secretion only: not a medium component'}, height(add), 1);
+        end
+        specificData.rxns2constrain = [T; add];
+        fprintf('%d core exchanges of non-medium metabolites made secretion-only\n', numel(secretionOnly));
     end
 
     % model extraction

@@ -1,0 +1,42 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "flux2feature"
+version = "1.0.0"
+description = "Interpretable, declared descriptors of metabolic flux vectors from genome-scale models"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Germán Preciat" },
+  { name = "Ramyet Sotelo Rodriguez" },
+  { name = "Carolina Elizabeth Gómez Márquez" },
+]
+keywords = ["metabolic modelling", "flux sampling", "constraint-based modelling",
+            "genome-scale metabolic models", "interpretable features", "COBRA"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = ["numpy>=1.22"]
+
+[project.optional-dependencies]
+frame = ["pandas>=1.4"]                 # flux2feature(..., as_frame=True)
+test = ["pytest>=7", "scipy>=1.8"]      # scipy reads RBC-GEM.mat for the reference check
+cobra = ["cobra>=0.26"]                 # Model.from_cobra
+
+[project.urls]
+Repository = "https://github.com/GIMIudg/GIMIpapers/tree/main/flux2features/tools/python"
+Changelog = "https://github.com/GIMIudg/GIMIpapers/blob/main/flux2features/tools/python/CHANGELOG.md"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
