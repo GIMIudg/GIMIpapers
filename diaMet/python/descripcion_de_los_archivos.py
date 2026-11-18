@@ -19,6 +19,6 @@ una pca y un heatmap aqui con todos los datos
 en el formato que espera XomicsToModel (specificData.transcriptomicData) ESTO ES PARA GENERAR
 LOS MODELOS EN XOMICS
 
--(csvflujos_a_kluster_y_pca.py) usa los modelos ya generados por xomics para tambien hacer el
+-(csvflujos_a_kluster_y_pca.py) usa los FLUJOS DE EXPRESION ( SACADOS CON LOS L2 Y LOS PESOS QUE DIO GERMAN ) de losmodelos ya generados por xomics para tambien hacer el
 silhouette  para saber num de klusters optimo , tambien hacemos una pca y un heatmap aqui
 con todos los datos.
