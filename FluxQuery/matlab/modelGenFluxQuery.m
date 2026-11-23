@@ -1,13 +1,18 @@
-%% FluxQuery - Step 2: generation of the cholinergic and glutamatergic models
-% Builds context-specific genome-scale models of human cholinergic and
-% glutamatergic neurons with XomicsToModel (COBRA Toolbox), following the
-% iDopaNeuro pipeline. The dopaminergic neuron is NOT rebuilt: the published
-% iDopaNeuroC model (data/models/iDopaNeuroC.mat) is used in steps 3 and 4.
+%% FluxQuery - Step 2: generation of the dopaminergic, cholinergic and glutamatergic models
+% Builds context-specific genome-scale models of human dopaminergic (iDopaNeuro),
+% cholinergic (iCholiNeuro) and glutamatergic (iGlutaNeuro) neurons with
+% XomicsToModel (COBRA Toolbox), following the iDopaNeuro pipeline. The three
+% models are built by this script with the same parameters; the dopaminergic
+% model uses the bibliomic, transcriptomic and exometabolomic data of the
+% published iDopaNeuroC (data/models/iDopaNeuroC.mat), with the corrections of
+% results/bibliomic/bibliomicCurationLog.xlsx.
 %
 % Inputs (project folder, chosen with a dialog; nothing is hard-coded):
 %   results/bibliomic/bibliomicData_<neuron>Neuron.xlsx      bibliomic data (step 0, manual curation)
 %   data/omics/<neuron>/transcriptomicData_<neuron>Neuron.txt  genes,expVal (FPKM)   (step 1)
-%   data/omics/glutamatergic/exometabolomicData_glutamatergicNeuron.txt       rxns,...,mean,SD (umol/gDW/h)
+%   data/omics/<neuron>/exometabolomicData_<neuron>Neuron.txt   rxns,...,mean,SD (umol/gDW/h), when measured
+%   data/models/iDopaNeuroC.mat   source of the dopaminergic transcriptomic and exometabolomic
+%                                 files, which are written to data/omics/dopaminergic/ when missing
 %   data/omics/glutamatergic/exometabolomicDirection_glutamatergicNeuron.txt  secreted/uptaken, no rate
 %   generic model: Recon3DModel_301_xomics_input.mat (COBRA Toolbox, papers/2023_iDopaNeuro)
 %
@@ -26,8 +31,8 @@ clear
 initCobraToolbox(false)
 global CBTDIR
 
-neurons = {'cholinergic', 'glutamatergic'};     % neurons to build
-modelNames = containers.Map(neurons, {'iCholiNeuro', 'iGlutaNeuro'});
+neurons = {'dopaminergic', 'cholinergic', 'glutamatergic'};     % neurons to build
+modelNames = containers.Map(neurons, {'iDopaNeuro', 'iCholiNeuro', 'iGlutaNeuro'});
 solver = 'gurobi';
 
 % Exometabolomic data are used when present (glutamatergic). Metabolites that
@@ -85,7 +90,24 @@ param.findThermoConsistentFluxSubset = 1;
 param.tissueSpecificSolver = 'thermoKernel';
 param.activeGenesApproach = 'oneRxnPerActiveGene';
 param.transcriptomicThreshold = 0;              % log2(FPKM): genes with FPKM > 1 are expressed
+param.TolMinBoundary = -1e4;                    % generic flux bounds of iDopaNeuro (limitBoundary 10000);
+param.TolMaxBoundary = 1e4;                     % the XomicsToModel default (1000) truncates O2, CO2 and glucose
 param.printLevel = 1;
+
+%% Dopaminergic inputs from the published iDopaNeuroC (written once to data/omics/dopaminergic)
+dopaDir = fullfile(dataDir, 'omics', 'dopaminergic');
+dopaFiles = {fullfile(dopaDir, 'transcriptomicData_dopaminergicNeuron.txt'), ...
+    fullfile(dopaDir, 'exometabolomicData_dopaminergicNeuron.txt')};
+if ismember('dopaminergic', neurons) && ~all(cellfun(@isfile, dopaFiles))
+    idn = load(fullfile(dataDir, 'models', 'iDopaNeuroC.mat'));
+    sd = idn.iDopaNeuroC.XomicsToModelSpecificData;
+    tr = sd.transcriptomicData;
+    tr = table(string(tr.genes), tr.expVal, 'VariableNames', {'genes', 'expVal'});
+    writetable(tr, dopaFiles{1});
+    writetable(sd.exoMet, dopaFiles{2});
+    fprintf('dopaminergic transcriptomic (%d genes) and exometabolomic (%d rates) data written from iDopaNeuroC\n', ...
+        height(tr), height(sd.exoMet));
+end
 
 %% Build each model
 for i = 1:numel(neurons)
@@ -110,8 +132,8 @@ for i = 1:numel(neurons)
     exoFile = fullfile(omicsDir, ['exometabolomicData_' neuron 'Neuron.txt']);
     if isfile(exoFile)
         specificData.exoMet = readtable(exoFile, 'TextType', 'string');
-        for v = {'rxns', 'mets', 'metName', 'platform'}                % text columns as cell arrays
-            specificData.exoMet.(v{1}) = cellstr(specificData.exoMet.(v{1}));
+        for v = intersect({'rxns', 'mets', 'metName', 'platform'}, specificData.exoMet.Properties.VariableNames)
+            specificData.exoMet.(v{1}) = cellstr(specificData.exoMet.(v{1}));   % text columns as cell arrays
         end
         fprintf('exometabolomic data: %d exchange rates\n', height(specificData.exoMet));
     else
@@ -138,6 +160,36 @@ for i = 1:numel(neurons)
         fprintf('%d secreted exchanges added to the core set\n', numel(secreted));
     end
 
+    % XomicsToModel does not read the rxnsHypothesis sheet: its bounds (uptake hypotheses
+    % with capped rates, required secretions) are applied as constrained reactions,
+    % unless the reaction is already in rxns2constrain.
+    if isfield(specificData, 'rxnsHypothesis') && istable(specificData.rxnsHypothesis) && ...
+            ~isempty(specificData.rxnsHypothesis)
+        H = specificData.rxnsHypothesis;
+        H.rxns = strtrim(cellstr(H.rxns));
+        % demands and sinks are not passed: thermoKernel does not accept them as constrained
+        % reactions (they enter through sinkDemand)
+        H = H(~ismember(H.rxns, cellstr(specificData.rxns2constrain.rxns)) & ismember(H.rxns, genericModel.rxns) & ...
+            ~startsWith(H.rxns, {'DM_', 'sink_'}), :);
+        T = specificData.rxns2constrain;
+        add = T(ones(height(H), 1), :);
+        for v = T.Properties.VariableNames
+            x = add.(v{1});
+            if iscell(x), add.(v{1}) = repmat({''}, height(add), 1);
+            elseif isstring(x), add.(v{1}) = repmat("", height(add), 1);
+            elseif isnumeric(x), add.(v{1}) = NaN(height(add), 1);
+            end
+        end
+        add.rxns = H.rxns;
+        add.lb = H.lb;
+        add.ub = H.ub;
+        if ismember('constraintDescription', T.Properties.VariableNames)
+            add.constraintDescription = repmat({'Uptake hypothesis (rxnsHypothesis)'}, height(add), 1);
+        end
+        specificData.rxns2constrain = [T; add];
+        fprintf('%d reactions of rxnsHypothesis applied as constrained reactions\n', height(add));
+    end
+
     % uptake only of medium components: core exchange reactions keep the open bounds of the
     % generic model, so exchanges that are core but not medium components (e.g. secretions
     % observed in the exometabolome or inherited from iDopaNeuro) are made secretion-only.
@@ -149,7 +201,7 @@ for i = 1:numel(neurons)
         coreRxns = cellstr(specificData.activeReactions);
     end
     keepOpen = {'EX_o2[e]', 'EX_co2[e]', 'EX_h2o[e]', 'EX_h[e]', 'EX_hco3[e]', 'EX_nh4[e]', 'EX_pi[e]', ...
-        'EX_na1[e]', 'EX_k[e]', 'EX_cl[e]', 'EX_ca2[e]', 'EX_fe2[e]', 'EX_fe3[e]', 'EX_h2o2[e]', 'EX_i[e]'};
+        'EX_na1[e]', 'EX_k[e]', 'EX_cl[e]', 'EX_ca2[e]', 'EX_fe2[e]', 'EX_fe3[e]', 'EX_i[e]'};   % H2O2: secretion only
     given = {};
     for f = {'mediaData', 'rxnsHypothesis', 'rxns2constrain'}
         if isfield(specificData, f{1}) && istable(specificData.(f{1})) && ...
@@ -171,7 +223,7 @@ for i = 1:numel(neurons)
         end
         add.rxns = secretionOnly(:);
         add.lb = zeros(numel(secretionOnly), 1);
-        add.ub = 1000 * ones(numel(secretionOnly), 1);
+        add.ub = param.TolMaxBoundary * ones(numel(secretionOnly), 1);
         if ismember('constraintDescription', T.Properties.VariableNames)
             add.constraintDescription = repmat({'Secretion only: not a medium component'}, height(add), 1);
         end
@@ -196,4 +248,4 @@ for i = 1:numel(neurons)
     fprintf('saved %s\n', fullfile(outDir, [name '.mat']));
 end
 
-disp('Models saved in results/matlab/models. Next: samplesGenFluxQuery.m')
+disp('Models saved in results/matlab/models. Next: python/modelValidationFluxQuery.py, then samplesGenFluxQuery.m')

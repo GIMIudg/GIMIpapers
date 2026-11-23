@@ -1,5 +1,5 @@
 %% FluxQuery - Step 3: reproducible uniform sampling of the three neuron models
-% Samples the feasible flux space of the dopaminergic (iDopaNeuroC), cholinergic
+% Samples the feasible flux space of the dopaminergic (iDopaNeuro), cholinergic
 % (iCholiNeuro) and glutamatergic (iGlutaNeuro) models with Coordinate Hit-and-Run
 % with Rounding (CHRR, COBRA Toolbox).
 %
@@ -22,8 +22,7 @@
 % draw from the same distribution, and samplingSummary.csv shows how close they are.
 %
 % Inputs (project folder, chosen with a dialog):
-%   data/models/iDopaNeuroC.mat                       dopaminergic neuron (published)
-%   results/matlab/models/<neuron>/i*Neuro.mat        cholinergic and glutamatergic (step 2)
+%   results/matlab/models/<neuron>/i*Neuro.mat        the three models (step 2)
 %
 % Outputs, per neuron, in results/matlab/sampling/<neuron>/:
 %   samples1.mat, samples2.mat, samples3.mat   variables samples1..3 (reactions x points)
@@ -35,7 +34,7 @@
 
 %% Settings
 clear
-initCobraToolbox(false)
+% initCobraToolbox(false)
 global CBTDIR
 
 neurons = {'dopaminergic', 'cholinergic', 'glutamatergic'};   % neurons to sample
@@ -73,16 +72,12 @@ for i = 1:numel(neurons)
     setFiles = arrayfun(@(k) fullfile(outDir, sprintf('samples%d.mat', k)), 1:nSets, 'UniformOutput', false);
 
     % model
-    if strcmp(neuron, 'dopaminergic')
-        modelFile = fullfile(projectDir, 'data', 'models', 'iDopaNeuroC.mat');
-    else
-        d = dir(fullfile(projectDir, 'results', 'matlab', 'models', neuron, 'i*Neuro.mat'));
-        if isempty(d)
-            warning('No model for the %s neuron: run modelGenFluxQuery.m first. Skipped.', neuron);
-            continue
-        end
-        modelFile = fullfile(d(1).folder, d(1).name);
+    d = dir(fullfile(projectDir, 'results', 'matlab', 'models', neuron, 'i*Neuro.mat'));
+    if isempty(d)
+        warning('No model for the %s neuron: run modelGenFluxQuery.m first. Skipped.', neuron);
+        continue
     end
+    modelFile = fullfile(d(1).folder, d(1).name);
     % skip only if these exact samples (same model file, seeds and settings) already exist
     seeds = masterSeed + 100 * i + (1:nSets);
     manifestFile = fullfile(outDir, 'samplingManifest.json');
