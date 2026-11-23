@@ -104,9 +104,14 @@ if ismember('dopaminergic', neurons) && ~all(cellfun(@isfile, dopaFiles))
     tr = sd.transcriptomicData;
     tr = table(string(tr.genes), tr.expVal, 'VariableNames', {'genes', 'expVal'});
     writetable(tr, dopaFiles{1});
-    writetable(sd.exoMet, dopaFiles{2});
+    exo = sd.exoMet;                                    % iDopaNeuro names: rxnID, metID
+    exo = renamevars(exo, intersect({'rxnID', 'metID'}, exo.Properties.VariableNames, 'stable'), ...
+        replace(intersect({'rxnID', 'metID'}, exo.Properties.VariableNames, 'stable'), {'rxnID', 'metID'}, {'rxns', 'mets'}));
+    exo = exo(:, intersect({'rxns', 'mets', 'metName', 'platform', 'mean', 'SD'}, exo.Properties.VariableNames, 'stable'));
+    exo = exo(~cellfun(@isempty, cellstr(string(exo.rxns))), :);
+    writetable(exo, dopaFiles{2});
     fprintf('dopaminergic transcriptomic (%d genes) and exometabolomic (%d rates) data written from iDopaNeuroC\n', ...
-        height(tr), height(sd.exoMet));
+        height(tr), height(exo));
 end
 
 %% Build each model
