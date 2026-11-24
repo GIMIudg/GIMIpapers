@@ -28,6 +28,9 @@
 %   samples1.mat, samples2.mat, samples3.mat   variables samples1..3 (reactions x points)
 %   smallSamples.mat                           variable smallSamples (pilot set)
 %   samplingManifest.json, samplingSummary.csv, samplingReport.txt
+%   checkpoint/   rounded polytope and finished sets while the run is in progress; if MATLAB
+%                 stops, run the script again and it resumes from them (same model and
+%                 settings only). Deleted when all neurons have finished.
 %
 % Run as a script, or open it as a Live Script (right click > Open as Live Script)
 % and save as .mlx. Next step: code/python/samplingAnalysisFluxQuery.ipynb
@@ -64,6 +67,7 @@ end
 if status == 0, env.cobraToolboxCommit = strtrim(commit); else, env.cobraToolboxCommit = 'unknown'; end
 
 %% Sample each model
+finished = {};                   % checkpoint folders of neurons whose outputs are complete
 for i = 1:numel(neurons)
     neuron = neurons{i};
     fprintf('\n===== %s neuron =====\n', neuron);
@@ -86,6 +90,7 @@ for i = 1:numel(neurons)
         if strcmp(old.modelSHA256, sha256File(modelFile)) && isequal(old.seeds(:)', seeds) ...
                 && old.nPointsReturned == options.nPointsReturned && old.nStepsPerPoint == options.nStepsPerPoint
             fprintf('Samples of this model with these seeds and settings already exist. Skipped.\n');
+            finished{end + 1} = fullfile(outDir, 'checkpoint'); %#ok<AGROW>
             continue
         end
     end
@@ -102,22 +107,61 @@ for i = 1:numel(neurons)
         continue
     end
 
-    % sampling: set 1 computes the rounded polytope P, sets 2..nSets reuse it
+    % checkpoints: the rounded polytope and every finished set are saved as soon as they exist,
+    % so a run that stops (crash, power cut, Ctrl+C) resumes without rounding or sampling again.
+    % They are only reused for the same model file and settings, and are deleted at the end.
+    ckDir = fullfile(outDir, 'checkpoint');
+    if ~exist(ckDir, 'dir'), mkdir(ckDir); end
+    modelSHA = sha256File(modelFile);
+    ckKey = struct('modelSHA256', modelSHA, 'nPointsReturned', options.nPointsReturned, ...
+        'nStepsPerPoint', options.nStepsPerPoint);
+    polytopeFile = fullfile(ckDir, 'roundedPolytope.mat');
+
+    % rounded polytope (deterministic: FVA and maximum-volume ellipsoid; no random numbers)
+    P = [];
+    if isfile(polytopeFile)
+        ck = load(polytopeFile);
+        if isequal(ck.key.modelSHA256, modelSHA)
+            P = ck.P;
+            fprintf('rounded polytope loaded from checkpoint\n');
+        end
+    end
+    if isempty(P)
+        tic
+        opt = options;
+        opt.toRound = 1;
+        opt.nPointsReturned = 1;                       % only the rounding is needed here
+        opt.nStepsPerPoint = 1;
+        [P, ~] = sampleCbModel(model, [], 'CHRR', opt);
+        key = ckKey; %#ok<NASGU>
+        save(polytopeFile, 'P', 'key', '-v7.3');
+        fprintf('rounded polytope computed in %.1f min and saved to %s\n', toc / 60, polytopeFile);
+    end
+
+    % sample sets: each starts from its own seed, so a resumed set is identical to an uninterrupted one
     sets = cell(1, nSets);
     elapsed = zeros(1, nSets);
     for k = 1:nSets
+        setCk = fullfile(ckDir, sprintf('set%d.mat', k));
+        if isfile(setCk)
+            ck = load(setCk);
+            if isequal(ck.key, ckKey) && ck.seed == seeds(k)
+                sets{k} = ck.X;
+                if isfield(ck, 'minutes'), elapsed(k) = 60 * ck.minutes;
+                else, elapsed(k) = ck.elapsed(min(k, numel(ck.elapsed))); end   % older checkpoints stored the vector
+                fprintf('set %d (seed %d) loaded from checkpoint\n', k, seeds(k));
+                continue
+            end
+        end
         opt = options;
+        opt.toRound = 0;
         rng(seeds(k), 'twister');
         tic
-        if k == 1
-            opt.toRound = 1;
-            [P, sets{k}] = sampleCbModel(model, [], 'CHRR', opt);
-        else
-            opt.toRound = 0;
-            [~, sets{k}] = sampleCbModel(model, [], 'CHRR', opt, P);
-        end
+        [~, sets{k}] = sampleCbModel(model, [], 'CHRR', opt, P);
         elapsed(k) = toc;
-        fprintf('set %d (seed %d): %d points in %.1f min\n', k, seeds(k), size(sets{k}, 2), elapsed(k) / 60);
+        X = sets{k}; seed = seeds(k); key = ckKey; minutes = elapsed(k) / 60; %#ok<NASGU>
+        save(setCk, 'X', 'seed', 'key', 'minutes', '-v7.3');
+        fprintf('set %d (seed %d): %d points in %.1f min (checkpoint saved)\n', k, seeds(k), size(sets{k}, 2), elapsed(k) / 60);
     end
 
     % pilot set
@@ -141,7 +185,7 @@ for i = 1:numel(neurons)
     manifest.modelFile = strrep(modelFile, [projectDir filesep], '');
     manifest.modelSHA256 = sha256File(modelFile);
     manifest.nReactions = numel(model.rxns);
-    manifest.sampler = 'CHRR (sampleCbModel); set 1 toRound = 1, other sets reuse its rounded polytope';
+    manifest.sampler = 'CHRR (sampleCbModel); polytope rounded once (maximum-volume ellipsoid), then every set sampled from it with its own seed';
     manifest.nPointsReturned = options.nPointsReturned;
     manifest.nStepsPerPoint = options.nStepsPerPoint;
     manifest.rng = 'twister';
@@ -212,11 +256,18 @@ for i = 1:numel(neurons)
     fid = fopen(manifestFile, 'w');                % rewrite the manifest with the convergence diagnostics
     fprintf(fid, '%s', jsonencode(manifest, 'PrettyPrint', true));
     fclose(fid);
+    finished{end + 1} = ckDir; %#ok<AGROW>   % all outputs of this neuron are written
     fprintf('%s done: median agreement between sets %.1f%%, R-hat < 1.1 in %.1f%% of reactions\n', ...
         neuron, 100 * agree, 100 * mean(Rhat < 1.1));
     clear sets pooled sorted smallSamples P S
 end
 
+% remove the checkpoints once every neuron has finished (kept if the run stops earlier)
+if numel(finished) == numel(neurons)
+    for f = finished
+        if isfolder(f{1}), rmdir(f{1}, 's'); fprintf('checkpoint removed: %s\n', f{1}); end
+    end
+end
 disp('Samples saved in results/matlab/sampling. Next: samplingAnalysisFluxQuery.ipynb')
 
 %% Local functions

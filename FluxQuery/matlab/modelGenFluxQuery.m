@@ -125,6 +125,12 @@ for i = 1:numel(neurons)
     % bibliomic data
     bibliomicFile = fullfile(resultsDir, 'bibliomic', ['bibliomicData_' neuron 'Neuron.xlsx']);
     specificData = preprocessingOmicsModel(bibliomicFile, 1, 1);
+    % numeric medium data are required (formula cells saved without cached values are read as NaN)
+    if isfield(specificData, 'mediaData') && ismember('mediumMaxUptake', specificData.mediaData.Properties.VariableNames) && ...
+            any(isnan(specificData.mediaData.mediumMaxUptake))
+        error('%s: mediaData.mediumMaxUptake has NaN values (%s). Open and save the workbook in Excel, or replace formulas by values.', ...
+            neuron, strjoin(cellstr(specificData.mediaData.rxns(isnan(specificData.mediaData.mediumMaxUptake))), ', '));
+    end
 
     % transcriptomic data (genes, expVal)
     omicsDir = fullfile(dataDir, 'omics', neuron);
