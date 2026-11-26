@@ -40,7 +40,12 @@ MARKERS = [('CHAT', 'acetylcholine synthesis', {'cholinergic'}, {'cholinergic'})
            # pyruvate carboxylase flux was measured in the iDopaNeuro cultures (rxns2constrain of iDopaNeuro)
            ('PCm', 'pyruvate carboxylase (astrocytes)', {'dopaminergic'}, set()),
            ('PGCD', 'phosphoglycerate dehydrogenase (astrocytes)', set(), set()),
-           ('NAAGS', 'NAAG synthesis', {'glutamatergic', 'cholinergic', 'dopaminergic'}, set())]
+           ('NAAGS', 'NAAG synthesis', {'glutamatergic', 'cholinergic', 'dopaminergic'}, set()),
+           ('GABAVESSEC', 'vesicular GABA release (VGAT)', set(), set()),
+           ('GLYVESSEC', 'vesicular glycine release (VGAT)', set(), set()),
+           ('DOPABMO', 'dopamine beta-hydroxylase (noradrenaline)', set(), set()),
+           ('CITL', 'ATP-independent citrate lyase (not human)', set(), set()),
+           ('HMGCOAtm', 'mitochondrial HMG-CoA transport (ketogenesis bypass)', set(), set())]
 TOL = 1e-6
 
 

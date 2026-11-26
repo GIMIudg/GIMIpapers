@@ -33,6 +33,9 @@ global CBTDIR
 
 neurons = {'dopaminergic', 'cholinergic', 'glutamatergic'};     % neurons to build
 modelNames = containers.Map(neurons, {'iDopaNeuro', 'iCholiNeuro', 'iGlutaNeuro'});
+if ~isempty(getenv('FLUXQUERY_NEURONS'))                         % e.g. FLUXQUERY_NEURONS=glutamatergic
+    neurons = strsplit(getenv('FLUXQUERY_NEURONS'), ',');
+end
 solver = 'gurobi';
 
 % Exometabolomic data are used when present (glutamatergic). Metabolites that
@@ -41,7 +44,10 @@ solver = 'gurobi';
 useSecretedAsActive = true;
 
 %% Project folder and generic model
-projectDir = uigetdir(pwd, 'Select the FluxQuery project folder (contains data/ and results/)');
+projectDir = getenv('FLUXQUERY_PROJECT');                     % set it to run from the terminal
+if isempty(projectDir)
+    projectDir = uigetdir(pwd, 'Select the FluxQuery project folder (contains data/ and results/)');
+end
 if isequal(projectDir, 0), error('No project folder selected'); end
 dataDir = fullfile(projectDir, 'data');
 resultsDir = fullfile(projectDir, 'results');
@@ -147,6 +153,16 @@ for i = 1:numel(neurons)
             specificData.exoMet.(v{1}) = cellstr(specificData.exoMet.(v{1}));   % text columns as cell arrays
         end
         fprintf('exometabolomic data: %d exchange rates\n', height(specificData.exoMet));
+        % a curated rate replaces a measured one only when the bibliomic workbook says so
+        % (rxns2constrain.constraintDescription starting with 'Curation over exometabolome')
+        if ismember('constraintDescription', specificData.rxns2constrain.Properties.VariableNames)
+            over = startsWith(string(specificData.rxns2constrain.constraintDescription), 'Curation over exometabolome');
+            drop = ismember(specificData.exoMet.rxns, cellstr(specificData.rxns2constrain.rxns(over)));
+            if any(drop)
+                fprintf('measured rates replaced by curated constraints: %s\n', strjoin(specificData.exoMet.rxns(drop), ', '));
+                specificData.exoMet(drop, :) = [];
+            end
+        end
     else
         fprintf('no exometabolomic data for this neuron\n');
     end

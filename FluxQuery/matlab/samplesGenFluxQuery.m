@@ -37,10 +37,15 @@
 
 %% Settings
 clear
-% initCobraToolbox(false)
 global CBTDIR
+if isempty(CBTDIR), initCobraToolbox(false); end   % needed when run from the terminal (matlab -batch)
+% the CHRR sampler's progress bar can hang MATLAB on macOS: use a silent waitbar (same samples)
+addpath(fullfile(fileparts(mfilename('fullpath')), 'noWaitbar'), '-begin');
 
 neurons = {'dopaminergic', 'cholinergic', 'glutamatergic'};   % neurons to sample
+if ~isempty(getenv('FLUXQUERY_NEURONS'))                       % e.g. FLUXQUERY_NEURONS=cholinergic,glutamatergic
+    neurons = strsplit(getenv('FLUXQUERY_NEURONS'), ',');
+end
 masterSeed = 20261113;          % fixed; do not change once results are reported
 nSets = 3;                      % independent sample sets per model
 options.nPointsReturned = 8000; % points per set
@@ -51,7 +56,10 @@ solver = 'gurobi';
 
 changeCobraSolver(solver, 'all', 0);
 
-projectDir = uigetdir(pwd, 'Select the FluxQuery project folder (contains data/ and results/)');
+projectDir = getenv('FLUXQUERY_PROJECT');                     % set it to run from the terminal
+if isempty(projectDir)
+    projectDir = uigetdir(pwd, 'Select the FluxQuery project folder (contains data/ and results/)');
+end
 if isequal(projectDir, 0), error('No project folder selected'); end
 
 % software versions, recorded in every manifest
@@ -132,6 +140,7 @@ for i = 1:numel(neurons)
         opt.toRound = 1;
         opt.nPointsReturned = 1;                       % only the rounding is needed here
         opt.nStepsPerPoint = 1;
+        fprintf('rounding the polytope (FVA and maximum-volume ellipsoid)...\n');
         [P, ~] = sampleCbModel(model, [], 'CHRR', opt);
         key = ckKey; %#ok<NASGU>
         save(polytopeFile, 'P', 'key', '-v7.3');
@@ -156,6 +165,8 @@ for i = 1:numel(neurons)
         opt = options;
         opt.toRound = 0;
         rng(seeds(k), 'twister');
+        fprintf('set %d (seed %d): sampling %d points x %d steps, started %s\n', k, seeds(k), ...
+            opt.nPointsReturned, opt.nStepsPerPoint, char(datetime('now', 'Format', 'HH:mm')));
         tic
         [~, sets{k}] = sampleCbModel(model, [], 'CHRR', opt, P);
         elapsed(k) = toc;
